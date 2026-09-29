@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="4x4 SUV on a high mountain track">
+  <rect width="1200" height="800" fill="#10241c"/>
+  <path d="M0 390 L200 220 L380 340 L560 160 L780 320 L980 200 L1200 340 L1200 800 L0 800 Z" fill="#3d5c52"/>
+  <path d="M560 160 L640 250 L600 270 L720 340 L520 300 Z" fill="#e4eef0"/>
+  <path d="M0 540 C220 470 400 600 680 510 C920 430 1040 590 1200 520 L1200 800 L0 800 Z" fill="#1b4634"/>
+  <path d="M0 690 C280 640 520 700 860 640 C1040 610 1120 670 1200 650 L1200 800 L0 800 Z" fill="#0e241c"/>
+  <path d="M30 745 H1170" stroke="#d9782d" stroke-width="8"/>
+  <g transform="translate(380 545)" fill="#163528" stroke="#f4f7f2" stroke-width="6">
+    <rect x="40" y="40" width="280" height="90" rx="16"/>
+    <path d="M90 40 L130 0 H250 L290 40" fill="#0c1c16"/>
+    <circle cx="100" cy="140" r="36"/>
+    <circle cx="270" cy="140" r="36"/>
+    <rect x="150" y="8" width="70" height="18" fill="#8ec9d6" stroke="none"/>
+  </g>
+</svg>

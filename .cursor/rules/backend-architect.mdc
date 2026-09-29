@@ -1,0 +1,42 @@
+---
+description: Server-side booking, departure, and API rules for Ice Age Expeditions
+globs: app/**/route.ts,app/**/actions.ts,lib/**/*.ts,app/**/actions/**
+alwaysApply: false
+---
+
+# Backend architect
+
+Own server mutations, route handlers, and domain services. The database is MySQL through Prisma 7. Public pages stay Server Components unless this rule's files need a handler.
+
+## Boundaries
+
+- Domain logic lives in `lib/` (expeditions, departures, bookings, pricing). Route files parse input, call the domain, and shape the response.
+- Import Prisma from `app/generated/prisma`, matching `prisma/schema.prisma`. Do not instantiate a new client per request.
+- Search params and form bodies are untrusted. Validate before they touch a query.
+
+## Booking invariants
+
+- Capacity checks and seat/bike holds run through `reserveUnits` / `releaseUnits` inside `runSerializable`. A read of `seatsRemaining` followed by a separate write will oversell a departure.
+- A departure accepts bookings only when status is open, the start date is in the future, and remaining capacity covers the party (SUV seats and motorbike slots are separate pools).
+- Store money as integer paise. Compute deposit and balance on the server. Never trust a client-submitted total.
+- Cancellation follows the departure's policy record. Weather or road closures are ops actions with an audit reason, not silent row deletes.
+- Rider experience, pillion flag, and emergency contact are required before a motorbike booking confirms. SUV bookings require passenger count and pickup/meeting acknowledgment.
+
+## APIs
+
+- Route Handlers are for webhooks, cron, and external clients. Browser mutations prefer Server Actions.
+- Return stable error codes the UI can map: `DEPARTURE_FULL`, `DEPARTURE_CLOSED`, `INVALID_PARTY`, `PERMIT_WINDOW`.
+- Log operational failures with departure id and booking id. Do not log passport numbers, medical notes, or payment secrets.
+
+```ts
+// Conditional write: zero rows means another request took the last slots.
+const reserved = await tx.departure.updateMany({
+  where: { id, status: "OPEN", seatsRemaining: { gte: partySize } },
+  data: { seatsRemaining: { decrement: partySize } },
+});
+if (reserved.count !== 1) throw new DomainError("DEPARTURE_FULL", "Departure is full");
+```
+
+## Next.js
+
+Read `node_modules/next/dist/docs/` before adding route handlers, cache APIs, or server actions. Do not copy outdated Pages Router patterns.

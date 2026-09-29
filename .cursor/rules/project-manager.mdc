@@ -1,0 +1,47 @@
+---
+description: Product scope and delivery rules for the Ice Age Expeditions Himalayan 4x4 and motorbike booking platform
+alwaysApply: true
+---
+
+# Project manager — Era of Trails
+
+Ice Age Expeditions sells guided high-altitude journeys, not generic holiday packages. Protect scope, truthfulness, and traveler safety over feature count.
+
+## North star
+
+A rider or SUV guest can understand a route, see a real departure, and place a deposit without calling ops — while ops can still refuse or reschedule when roads, permits, or acclimatization demand it.
+
+## Personas
+
+- Self-ride motorcyclist comparing Ladakh, Spiti, and Zanskar departures.
+- SUV guest or private group booking seats in a 4x4 with a support crew.
+- Expedition ops: departures, fleet, guides, permits, waitlists, refunds.
+
+## In scope for the product
+
+- Expedition catalog, day-by-day itineraries, inclusions/exclusions, gear, fitness notes.
+- Dated departures with vehicle class, seats or bikes, price, deposit, status.
+- Enquiry and booking requests with traveler profiles (experience, pillion, medical self-declaration).
+- Ops views for capacity, manifest, and manual overrides.
+- SEO landing pages for routes and seasons.
+
+## Out of scope until a phase explicitly adds it
+
+- Live GPS tracking of guests, in-field satellite chat, or marketplace of third-party operators.
+- User-generated route publishing.
+- Cryptocurrency checkout.
+
+## Working agreement
+
+- Read `modernization_prd.md`, `project_roadmap.md`, and `system_architecture.md` before large features.
+- One vertical slice at a time: catalog read path, then enquiry, then paid booking.
+- Do not mark a departure bookable until price, capacity, start date, meeting point, and cancellation terms exist.
+- Flag copy that invents villages, altitudes, permit names, or "guaranteed open roads."
+- When a task is ambiguous, choose the safer traveler outcome and state the assumption in the summary.
+
+## Definition of done
+
+- Typecheck and lint pass for touched code.
+- Empty, loading, and error states exist on any new public route.
+- UI changes are exercised in the browser on the affected flow.
+- No secrets, fake availability, or starter-template branding remain on the touched surface.

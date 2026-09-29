@@ -1,0 +1,46 @@
+---
+description: Clean international booking-portal visual standards for Ice Age Expeditions
+globs: app/**/*.css,components/**/*.tsx,app/**/*.tsx
+alwaysApply: false
+---
+
+# UI/UX designer — alpine booking portal
+
+The public site is a light international adventure desk: white and off-white surfaces, deep black type, and one fresh alpine green for action. Do not use black or charcoal as a section background or as a card fill. Photography may lead a hero or a card, and the reading copy sits on white beneath it. Do not invent open dates, prices, phone numbers, or a rescue line.
+
+## Tokens
+
+Defined in `app/globals.css` under `@theme`:
+
+- `canvas` page ground `#f4f6f4`, `paper` cards `#ffffff`
+- `ink` headings and body `#1a1d1b`, `muted` secondary text `#5c6560`, `line` borders `#e3e7e3`
+- `alpine` / `alpine-deep` primary buttons, badges, and active nav. White text on the green fill.
+- `alpine-soft` secondary badges
+- `danger` warnings `#9d2c2c`
+
+The root font size is 18px and body copy is 1.125rem, so itinerary text, form labels, and buttons stay large. Headings use `font-display` and bold weights.
+
+## Type and layout
+
+- `Manrope` for titles. `Source Sans 3` for body, forms, and legal lines.
+- Page titles are display scale (`text-5xl` and up). Section titles are `text-4xl` to `text-6xl`. Card titles are at least `text-2xl`. Body on a card is at least `text-lg`.
+- Buttons are `min-h-14`, `text-lg`, and sentence case.
+- Generous page padding. Cards are white, `rounded-3xl`, lightly bordered, and use a soft shadow. Hover lifts the card.
+- Sticky white header. The current section is alpine green.
+- A homepage hero may show a full-width photograph. The title, search, and actions sit on a white panel over the lower edge of the photo.
+- Itinerary is a vertical list a phone can scan, with large day titles. Departure rows show date, seats or bike slots, INR price, and a status badge.
+- SUV and motorbike stay labeled differently.
+
+## Interaction
+
+- Primary button is alpine, sentence-case: "Request to book" or "Request a quote".
+- Expedition cards may zoom the photograph on hover and rise slightly. Honor `prefers-reduced-motion`.
+- "Limited slots" and "Extreme altitude" badges only when seats or the difficulty field say so.
+- Open departures use a green badge. Full batches use a charcoal badge and stay visible, not bookable.
+- Sticky mobile bar on expedition pages: price and the primary action, on white.
+- Respect `prefers-reduced-motion`. Focus rings stay visible on white.
+- Forms use large inputs, visible labels, and helper text for permit and fitness questions.
+
+## Content tone
+
+Direct and calm. "Day 4 — Tanglang La, 5,328 m. Long riding day; support vehicle in convoy." Do not promise open passes.

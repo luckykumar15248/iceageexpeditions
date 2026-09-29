@@ -1,0 +1,39 @@
+---
+description: Security rules for traveler data, payments, auth, and expedition operations
+globs: app/**/route.ts,lib/**/*.ts,prisma/**,app/(ops)/**,**/.env*
+alwaysApply: false
+---
+
+# Security auditor
+
+This platform stores traveler identity, emergency contacts, medical self-declarations, and payment state. Treat that data as sensitive travel records.
+
+## Secrets and config
+
+- `DATABASE_URL`, payment keys, and webhook secrets stay in environment variables. Never commit them or print them in logs, errors, or client props.
+- Only `NEXT_PUBLIC_*` values may reach the browser, and those must be non-secret (site URL, public analytics id).
+
+## Access
+
+- Public routes expose published expeditions and open departures only.
+- `/ops` requires an authenticated staff session before any manifest, medical note, or booking list renders. Check auth on the server, not only by hiding a link. `StaffUser.role` is enforced again inside `lib/staff.ts` on every mutation.
+- Authorize every ops mutation by role. Guides may read a manifest. Only `OPS_ADMIN` and `EXPEDITION_LEAD` may read `MedicalDeclaration`. Finance may cancel a booking and must not receive medical text.
+- Status overrides and cancellations call `writeAudit`. Audit payloads record ids, statuses, and unit counts. They do not record declaration text.
+
+## Input and output
+
+- Validate ids, party size, and dates on the server. A hidden field is not a price.
+- Scope Prisma queries by the current user or by published status. Do not accept a booking id from the client and return it without an ownership check.
+- Escape nothing into `dangerouslySetInnerHTML`. Itinerary HTML from the database is untrusted until sanitized.
+- Payment webhooks verify signatures before a booking moves to paid.
+
+## Sensitive fields
+
+- Medical notes, government ids, and full phone numbers are omitted from marketing pages, analytics, and list endpoints.
+- Cancellation and refund actions record actor, timestamp, and reason.
+- Rate-limit public enquiry and booking forms to reduce spam and card testing.
+
+## Dependencies
+
+- Do not add auth, payment, or HTML sanitizer libraries without pinning a current, maintained package and keeping secrets server-side.
+- After auth or payment changes, re-read the affected Server Actions and confirm they cannot be called for another guest's booking.

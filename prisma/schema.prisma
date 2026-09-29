@@ -1,0 +1,340 @@
+// Ice Age Expeditions — expedition inventory, bookings, and ops audit.
+// Money is integer INR paise. seatsRemaining is SUV seats or motorbike rider slots,
+// chosen by Expedition.vehicleClass. Medical text lives only on MedicalDeclaration.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum VehicleClass {
+  SUV_4X4
+  MOTORBIKE
+}
+
+enum Difficulty {
+  MODERATE
+  CHALLENGING
+  STRENUOUS
+  EXTREME
+}
+
+enum ExpeditionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum DepartureStatus {
+  DRAFT
+  OPEN
+  FULL
+  CLOSED
+  CANCELLED
+  COMPLETED
+}
+
+enum BookingStatus {
+  REQUESTED
+  PENDING_PAYMENT
+  DEPOSIT_PAID
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum ExperienceLevel {
+  NONE
+  SOME
+  EXPERIENCED
+  ADVANCED
+}
+
+enum EnquiryKind {
+  GENERAL
+  WAITLIST
+  CUSTOM_PRIVATE
+  BOOKING_REQUEST
+}
+
+enum EnquiryStatus {
+  OPEN
+  CONTACTED
+  CONVERTED
+  CLOSED
+  QUOTED
+}
+
+enum StaffRole {
+  OPS_ADMIN
+  EXPEDITION_LEAD
+  GUIDE
+  FINANCE
+  VIEWER
+}
+
+enum AuditAction {
+  BOOKING_CREATED
+  BOOKING_CANCELLED
+  DEPARTURE_STATUS_CHANGED
+  ENQUIRY_CREATED
+  EXPEDITION_SAVED
+  DEPARTURE_CREATED
+  ENQUIRY_UPDATED
+}
+
+model Region {
+  id          String       @id @default(cuid())
+  slug        String       @unique @db.VarChar(140)
+  name        String       @db.VarChar(160)
+  summary     String       @db.Text
+  expeditions Expedition[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([name])
+}
+
+model CancellationPolicy {
+  id         String      @id @default(cuid())
+  name       String      @db.VarChar(160)
+  summary    String      @db.Text
+  departures Departure[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Expedition {
+  id                     String           @id @default(cuid())
+  regionId               String
+  slug                   String           @unique @db.VarChar(140)
+  title                  String           @db.VarChar(180)
+  vehicleClass           VehicleClass
+  durationDays           Int
+  maxAltitudeMeters      Int
+  difficulty             Difficulty
+  seasonLabel            String           @db.VarChar(120)
+  seasonStartMonth       Int?
+  seasonEndMonth         Int?
+  summary                String           @db.Text
+  inclusions             String           @db.Text
+  exclusions             String           @db.Text
+  permitNotes            String?          @db.Text
+  supportVehicleIncluded Boolean          @default(true)
+  heroImageUrl           String?          @db.VarChar(500)
+  heroImageAlt           String?          @db.VarChar(240)
+  metaTitle              String?          @db.VarChar(180)
+  metaDescription        String?          @db.VarChar(320)
+  focusKeywords          String?          @db.VarChar(255)
+  robotsIndex            Boolean          @default(true)
+  robotsFollow           Boolean          @default(true)
+  ogTitle                String?          @db.VarChar(180)
+  ogDescription          String?          @db.VarChar(320)
+  ogImageUrl             String?          @db.VarChar(500)
+  ogImageAlt             String?          @db.VarChar(240)
+  status                 ExpeditionStatus @default(DRAFT)
+  region                 Region           @relation(fields: [regionId], references: [id], onDelete: Restrict)
+  days                   ItineraryDay[]
+  gallery                ExpeditionImage[]
+  departures             Departure[]
+  enquiries              Enquiry[]
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  @@index([regionId, status])
+  @@index([vehicleClass, status])
+  @@index([status, title])
+}
+
+model ExpeditionImage {
+  id           String     @id @default(cuid())
+  expeditionId String
+  url          String     @db.VarChar(500)
+  alt          String     @db.VarChar(240)
+  sortOrder    Int
+  expedition   Expedition @relation(fields: [expeditionId], references: [id], onDelete: Cascade)
+
+  @@index([expeditionId, sortOrder])
+}
+
+model ItineraryDay {
+  id                  String     @id @default(cuid())
+  expeditionId        String
+  dayNumber           Int
+  title               String     @db.VarChar(180)
+  body                String     @db.Text
+  sleepStop           String     @db.VarChar(180)
+  sleepAltitudeMeters Int
+  /// Ride or drive time for the day. Stored as hours with one decimal place.
+  movingHours         Decimal    @db.Decimal(4, 1)
+  expedition          Expedition @relation(fields: [expeditionId], references: [id], onDelete: Cascade)
+
+  @@unique([expeditionId, dayNumber])
+  @@index([expeditionId])
+}
+
+model Departure {
+  id                   String              @id @default(cuid())
+  expeditionId         String
+  cancellationPolicyId String?
+  startDate            DateTime            @db.Date
+  endDate              DateTime            @db.Date
+  meetingPoint         String              @db.VarChar(255)
+  capacity             Int
+  /// SUV seats, or motorbike rider slots. Never a mix on one departure.
+  seatsRemaining       Int
+  /// When false, a pillion travels with a rider and does not take another slot.
+  pillionConsumesSlot  Boolean             @default(false)
+  pricePaisa           Int
+  depositPaisa         Int
+  status               DepartureStatus     @default(DRAFT)
+  /// Copied onto each booking so later policy edits do not rewrite history.
+  policySnapshot       String              @db.Text
+  expedition           Expedition          @relation(fields: [expeditionId], references: [id], onDelete: Restrict)
+  cancellationPolicy   CancellationPolicy? @relation(fields: [cancellationPolicyId], references: [id], onDelete: Restrict)
+  bookings             Booking[]
+  enquiries            Enquiry[]
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([expeditionId, startDate])
+  @@index([expeditionId, status, startDate])
+  @@index([status, startDate])
+  @@index([cancellationPolicyId])
+}
+
+model Booking {
+  id                   String        @id @default(cuid())
+  departureId          String
+  reference            String        @unique @db.VarChar(32)
+  status               BookingStatus @default(REQUESTED)
+  /// Inventory units held: SUV seats or rider slots, excluding non-consuming pillions.
+  partySize            Int
+  unitsHeld            Int
+  amountDuePaisa       Int
+  depositDuePaisa      Int
+  amountPaidPaisa      Int           @default(0)
+  policyAcknowledgedAt DateTime
+  policySnapshot       String        @db.Text
+  cancelledAt          DateTime?
+  cancelReason         String?       @db.Text
+  cancelledByStaffId   String?
+  departure            Departure     @relation(fields: [departureId], references: [id], onDelete: Restrict)
+  cancelledBy          StaffUser?    @relation("BookingCancelledBy", fields: [cancelledByStaffId], references: [id], onDelete: SetNull)
+  travelers            Traveler[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  @@index([departureId, status])
+  @@index([status, createdAt])
+  @@index([cancelledByStaffId])
+}
+
+model Traveler {
+  id              String              @id @default(cuid())
+  bookingId       String
+  isLead          Boolean             @default(false)
+  isPillion       Boolean             @default(false)
+  fullName        String              @db.VarChar(160)
+  email           String              @db.VarChar(191)
+  phone           String              @db.VarChar(32)
+  emergencyName   String              @db.VarChar(160)
+  emergencyPhone  String              @db.VarChar(32)
+  experienceLevel ExperienceLevel
+  booking         Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  medical         MedicalDeclaration?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([bookingId, isLead])
+  @@index([email])
+}
+
+/// Restricted fitness self-declaration. Do not select this relation on public pages.
+model MedicalDeclaration {
+  id                  String   @id @default(cuid())
+  travelerId          String   @unique
+  declarationText     String   @db.Text
+  fitnessAcknowledged Boolean
+  acknowledgedAt      DateTime @default(now())
+  traveler            Traveler @relation(fields: [travelerId], references: [id], onDelete: Cascade)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Enquiry {
+  id             String        @id @default(cuid())
+  kind           EnquiryKind
+  status         EnquiryStatus @default(OPEN)
+  expeditionId   String?
+  departureId    String?
+  vehicleClass   VehicleClass?
+  name           String        @db.VarChar(160)
+  email          String        @db.VarChar(191)
+  phone          String        @db.VarChar(32)
+  preferredMonth String?       @db.VarChar(7)
+  partySize      Int?
+  message        String        @db.Text
+  internalNote   String?       @db.Text
+  expedition     Expedition?   @relation(fields: [expeditionId], references: [id], onDelete: SetNull)
+  departure      Departure?    @relation(fields: [departureId], references: [id], onDelete: SetNull)
+  notes          EnquiryNote[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([kind, status, createdAt])
+  @@index([status, createdAt])
+  @@index([expeditionId])
+  @@index([departureId])
+  @@index([email])
+}
+
+model EnquiryNote {
+  id            String    @id @default(cuid())
+  enquiryId     String
+  authorStaffId String
+  body          String    @db.Text
+  createdAt     DateTime  @default(now())
+  enquiry       Enquiry   @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  author        StaffUser @relation(fields: [authorStaffId], references: [id], onDelete: Restrict)
+  @@index([enquiryId, createdAt])
+  @@index([authorStaffId])
+}
+
+model StaffUser {
+  id                String     @id @default(cuid())
+  email             String     @unique @db.VarChar(191)
+  name              String     @db.VarChar(160)
+  role              StaffRole
+  isActive          Boolean    @default(true)
+  /// scrypt hash. Null until an admin sets a password on the server. Never sent to the client.
+  passwordHash      String?    @db.VarChar(255)
+  audits            AuditLog[]
+  cancelledBookings Booking[]     @relation("BookingCancelledBy")
+  enquiryNotes      EnquiryNote[]
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  @@index([role, isActive])
+}
+
+model AuditLog {
+  id           String      @id @default(cuid())
+  actorStaffId String?
+  action       AuditAction
+  entityType   String      @db.VarChar(64)
+  entityId     String      @db.VarChar(64)
+  reason       String      @db.VarChar(500)
+  before       Json?
+  after        Json?
+  actor        StaffUser?  @relation(fields: [actorStaffId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorStaffId, createdAt])
+  @@index([action, createdAt])
+}

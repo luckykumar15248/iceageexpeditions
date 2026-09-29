@@ -1,0 +1,48 @@
+# Ice Age Expeditions — The Era of Trails
+
+You are building the booking and operations platform for Ice Age Expeditions: guided Himalayan 4x4 SUV and motorbike expeditions. Treat every change as production travel software. Wrong dates, capacities, prices, or permit copy can strand a rider or an SUV crew in the high Himalaya.
+
+## Stack (do not drift)
+
+- Next.js 16 App Router (`app/`). Before writing Next.js code, read the matching guide in `node_modules/next/dist/docs/`. This release differs from older App Router training data. Heed deprecation notices.
+- React 19. TypeScript strict mode. Path alias `@/*` maps to the repo root.
+- Tailwind CSS v4, configured in CSS (`@import "tailwindcss"` and `@theme inline` in `app/globals.css`). Do not add a legacy `tailwind.config.js` unless the codebase already has one.
+- Prisma ORM 7 with the `prisma-client` generator. Schema: `prisma/schema.prisma`. CLI config: `prisma.config.ts` (`prisma7.config.ts` re-exports it). Generated client: `@/app/generated/prisma/client`. Runtime singleton: `lib/db.ts` with `@prisma/adapter-mariadb`. Database: MySQL via `DATABASE_URL`. Seat and bike holds go through `lib/inventory.ts`.
+- Before Prisma schema, migration, or client changes, read the project Prisma skills under `.claude/skills/` (`prisma-cli`, `prisma-client-api`, `prisma-database-setup` MySQL, `prisma-upgrade-v7`).
+
+## Product rules
+
+- An expedition is a sellable journey (route, vehicle class, duration, difficulty, max altitude, season). A departure is a dated instance with capacity, price, status, and meeting point.
+- Vehicle classes are `SUV_4X4` and `MOTORBIKE`. Do not collapse them into one generic "tour" layout. Self-ride, pillion, and supported-passenger needs differ.
+- Never invent live availability, permit rules, or medical clearance. If data is missing, show an explicit unavailable or "confirm with ops" state.
+- Prices are INR unless a field says otherwise. Store money as integer paise. Deposits, balances, and cancellation windows are first-class, not free text.
+- Public copy must name real constraints: acclimatization days, Inner Line / Protected Area permits where they apply, weather and road-closure risk, and support-vehicle coverage.
+
+## App Router
+
+- Server Components by default. Add `"use client"` only for interaction, browser APIs, or local UI state.
+- Mutations that change bookings, departures, or payments go through Server Actions or Route Handlers that re-check capacity inside a transaction.
+- Colocate route files: `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`.
+- Keep secret-bearing code on the server. `DATABASE_URL` and payment secrets never reach client bundles.
+
+## TypeScript
+
+- No `any`. Prefer domain types and Prisma payload types.
+- Validate external input (forms, webhooks, search params) with an explicit schema at the boundary.
+- Handle errors with typed results or thrown domain errors that the UI can explain. Empty `catch` blocks are defects.
+
+## Rugged adventure UI
+
+- Visual language: high-altitude expedition, not a generic SaaS dashboard and not a glossy luxury resort.
+- Palette direction: clean white surfaces, deep charcoal type, and alpine green for calls to action, badges, and the active nav. Define tokens in `@theme`, then use those tokens. Text on photography sits on the white band below the image.
+- Photography leads. Scrims must keep text readable over bright snow and dark rock. Honor `prefers-reduced-motion`.
+- Mobile-first. Travelers enquire from the road. Tap targets stay comfortable with gloves in mind on primary actions.
+- Display type can be condensed and trail-worn; body type stays highly readable for itineraries, gear lists, and waiver copy.
+
+## Safety bar
+
+- Accessible names on icon buttons. Visible focus. Semantic headings.
+- Do not ship placeholder "Create Next App" metadata, fonts-as-brand, or lorem expedition facts.
+- Do not commit `.env`, credentials, or generated secrets.
+
+Role-specific standards live in `.cursor/rules/`. Follow the rule that matches the files you are changing.

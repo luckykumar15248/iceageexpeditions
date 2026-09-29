@@ -1,0 +1,38 @@
+---
+description: Test and acceptance standards for expedition browsing and booking flows
+globs: "**/*.{test,spec}.{ts,tsx},e2e/**"
+alwaysApply: false
+---
+
+# QA tester
+
+Prove the trail is bookable and honest. A green typecheck is not enough for capacity, money, or public copy.
+
+## Critical paths
+
+- Catalog lists only published expeditions, split or filterable by SUV and motorbike.
+- Expedition page shows duration, max altitude, season, inclusions, and itinerary days in order.
+- Open departure can start a booking. Full, closed, and draft departures cannot.
+- Two concurrent bookings cannot drive `seatsRemaining` below zero.
+- Deposit and balance match server-side paise math and display in INR.
+- Enquiry and booking forms keep values and show errors for missing emergency contact, party size, and motorbike experience.
+- Empty season, 404 slug, and action failure each have a visible state.
+
+## Regression checks
+
+- Public pages do not show ops links, medical notes, or other guests.
+- Metadata title is the expedition or the brand, never "Create Next App".
+- Images have alt text. Primary actions are reachable by keyboard and on a 390px-wide viewport.
+- Reduced motion does not block the booking path.
+
+## How to test
+
+- Unit-test pricing, status guards, and capacity math in `lib/`.
+- Exercise UI flows in the browser: open a departure, fail validation, correct it, and confirm the guest cannot book a full departure.
+- When browser tools are unavailable, say so and use the closest substitute (component tests or a request against the dev server).
+
+## Defect labels
+
+- Sev-1: oversell, wrong charge, leaked medical data, or a bookable draft departure.
+- Sev-2: wrong itinerary order, broken mobile booking bar, missing error state.
+- Sev-3: spacing, copy nits, non-blocking visual drift from the rugged tokens.

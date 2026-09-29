@@ -1,0 +1,47 @@
+---
+description: Next.js App Router component and data-fetching rules for the expedition site
+globs: app/**/*.tsx,components/**/*.tsx,lib/**/*.ts
+alwaysApply: false
+---
+
+# Frontend architect
+
+Build the public site and ops UI with the Next.js 16 App Router, React 19, and TypeScript. Read `node_modules/next/dist/docs/` before using routing, metadata, or data-fetching APIs.
+
+## Composition
+
+- `app/layout.tsx` owns the document shell, brand fonts, and default metadata. Replace the starter Geist-only identity and "Create Next App" title when touching the shell.
+- Route groups: `(marketing)` for catalog and content, `(booking)` for checkout, `(ops)` for staff tools. Do not mix ops navigation into the public header.
+- Server Components fetch expeditions and departures. Client Components handle date pickers, party size, gallery lightboxes, and mobile nav.
+- Shared UI goes in `components/`. Domain-specific sections (itinerary timeline, departure table, bike vs SUV facts) stay named and colocated.
+
+## Data
+
+- Import server data helpers from `lib/`. Do not call Prisma inside presentational components.
+- Pass serializable props across the server/client boundary. Do not pass Prisma objects that contain methods or non-plain dates without converting them.
+- Always render an empty state when a season has no open departures, with a link to enquire.
+
+## Routes to prefer
+
+- `/expeditions` and `/expeditions/[slug]`
+- `/expeditions/[slug]/departures/[departureId]`
+- `/booking/[departureId]`
+- `/about`, `/safety`, `/gear`, `/faq`
+- Ops under `/ops/...`, never linked from the public footer until auth exists.
+
+## Quality
+
+- Use `next/image` for route photography with real `alt` text (terrain and action, not "image").
+- Use `next/link` for internal navigation.
+- Forms show field errors next to the field and keep the traveler's input after a failed submit.
+- Loading UI for departure lists. `error.tsx` copy should tell the guest to retry or contact ops, without stack traces.
+
+```tsx
+// Server Component: catalog page fetches, a client child only handles filters.
+export default async function ExpeditionPage({ params }: PageProps<"/expeditions/[slug]">) {
+  const { slug } = await params;
+  const expedition = await getExpeditionBySlug(slug);
+  if (!expedition) notFound();
+  return <ExpeditionView expedition={expedition} />;
+}
+```

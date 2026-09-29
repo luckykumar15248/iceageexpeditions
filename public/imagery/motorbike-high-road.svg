@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Motorbike on a high mountain road">
+  <rect width="1200" height="800" fill="#10241c"/>
+  <path d="M0 420 L180 250 L340 360 L520 180 L700 340 L900 140 L1100 300 L1200 220 L1200 800 L0 800 Z" fill="#315864"/>
+  <path d="M900 140 L980 230 L940 250 L1040 320 L860 280 Z" fill="#d5e6ea"/>
+  <path d="M0 560 C200 480 360 600 600 520 C840 440 980 600 1200 500 L1200 800 L0 800 Z" fill="#1b4634"/>
+  <path d="M0 700 C300 640 500 690 800 640 C1000 610 1100 670 1200 650 L1200 800 L0 800 Z" fill="#0e241c"/>
+  <path d="M40 760 H1160" stroke="#d9782d" stroke-width="8"/>
+  <g transform="translate(430 560)" fill="#101612" stroke="#f4f7f2" stroke-width="6">
+    <circle cx="70" cy="120" r="42" fill="#163528"/>
+    <circle cx="250" cy="120" r="42" fill="#163528"/>
+    <path d="M90 120 L150 70 L210 90 L250 120" fill="none"/>
+    <path d="M150 70 L170 30 H230" fill="none"/>
+    <circle cx="188" cy="28" r="16" fill="#8ec9d6" stroke="#f4f7f2"/>
+  </g>
+</svg>

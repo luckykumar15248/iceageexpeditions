@@ -1,0 +1,56 @@
+---
+description: Prisma 7 and MySQL data rules for expeditions, departures, and bookings
+globs: prisma/**,prisma.config.ts,prisma7.config.ts,lib/**/*.ts,app/generated/prisma/**
+alwaysApply: false
+---
+
+# Database architect
+
+MySQL is the system of record. Prisma 7 is the only query layer. Read `.claude/skills/prisma-cli`, `prisma-client-api`, `prisma-database-setup/references/mysql.md`, and `prisma-upgrade-v7` before schema or migration work.
+
+## Current setup
+
+- Schema: `prisma/schema.prisma` (`provider = "mysql"`). The URL lives in `prisma.config.ts` via `DATABASE_URL`. `prisma7.config.ts` re-exports that config.
+- Generator: `prisma-client` with `output = "../app/generated/prisma"`. Import from `@/app/generated/prisma/client`.
+- Runtime client: `lib/db.ts` uses `@prisma/adapter-mariadb` and one process-wide `PrismaClient`.
+- Domain models: Region, Expedition, ItineraryDay, CancellationPolicy, Departure, Booking, Traveler, MedicalDeclaration, Enquiry, StaffUser, AuditLog.
+- Baseline migration: `prisma/migrations/20260927183000_init_expedition_domain`. Apply with `npm run db:migrate` locally, and `prisma migrate deploy` in production.
+
+## Model the trail, not a generic CMS
+
+- `Expedition`: slug, title, vehicle class (`SUV_4X4` | `MOTORBIKE`), duration days, max altitude meters, difficulty, season window, summary, status.
+- `ItineraryDay`: expedition id, day number, title, body, sleep altitude, drive or ride hours.
+- `Departure`: expedition id, start date, end date, capacity, seats remaining, price paise, deposit paise, status, meeting point.
+- `Booking` and `Traveler`: party size, units held, payment state, emergency contact, experience level. Medical text lives only on `MedicalDeclaration`.
+- `StaffUser.role` is `OPS_ADMIN`, `EXPEDITION_LEAD`, `GUIDE`, `FINANCE`, or `VIEWER`. Ops overrides write `AuditLog` with actor, reason, and before/after JSON. Do not put medical text in that JSON.
+- `Enquiry.kind` is `GENERAL`, `WAITLIST`, or `CUSTOM_PRIVATE`.
+- Use `cuid` ids and unique slugs. Keep the composite indexes already on departures, bookings, enquiries, and audit rows.
+
+## Migrations
+
+- Change schema only through Prisma migrations reviewed in git. Do not hand-edit the generated client.
+- `migrate dev` is for local development. Production applies committed migrations with `migrate deploy`.
+- Do not run destructive resets against a database that holds real booking rows.
+- Put money in `Int` paise. Departure start and end dates use `@db.Date`. Booking timestamps stay `DateTime`. Compare departure days in Asia/Kolkata.
+
+## Queries
+
+- Select only fields the caller needs. Expeditions lists must not load medical data or payment secrets.
+- Inventory changes go through `lib/inventory.ts` inside `runSerializable`. Reserve with `updateMany` where `status = OPEN` and `seatsRemaining >= units`, then decrement. Do not read remaining seats and write them back.
+- Prefer relation filters over raw SQL. If raw SQL is required, parameterize it and keep it in `lib/`.
+
+```prisma
+model Departure {
+  id              String   @id @default(cuid())
+  expeditionId    String
+  startDate       DateTime
+  capacity        Int
+  seatsRemaining  Int
+  pricePaisa      Int
+  status          DepartureStatus @default(DRAFT)
+  expedition      Expedition @relation(fields: [expeditionId], references: [id])
+
+  @@index([expeditionId, startDate])
+  @@index([status, startDate])
+}
+```

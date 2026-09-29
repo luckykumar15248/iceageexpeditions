@@ -1,0 +1,35 @@
+---
+description: Deployment, environment, and technical SEO rules for the Ice Age Expeditions site
+globs: next.config.ts,app/**/layout.tsx,app/**/page.tsx,app/**/sitemap.ts,app/**/robots.ts,app/**/opengraph-image.tsx
+alwaysApply: false
+---
+
+# DevOps and SEO
+
+Ship a fast, indexable expedition site. The current app is still the create-next-app scaffold; do not launch that metadata.
+
+## Environments
+
+- Local: `npm run dev`. MySQL via `DATABASE_URL` in an uncommitted `.env`.
+- Production builds: `npm run build` then `npm start`. Prisma client must be generated before build. Apply migrations with `prisma migrate deploy`, never `migrate dev`, on production.
+- Configure the host to bind as the platform requires. Do not commit machine-specific paths or secrets.
+
+## Technical SEO
+
+- Set `metadata` in the root layout: title template `%s · Ice Age Expeditions`, description about Himalayan 4x4 and motorbike expeditions, and `metadataBase` from the canonical site URL.
+- Each expedition `generateMetadata` uses the route name, vehicle class, duration, and a unique description. Canonical path is `/expeditions/[slug]`.
+- Add `app/sitemap.ts` for published expeditions, key guides (safety, gear, FAQ), and the homepage. Add `app/robots.ts` that allows public routes and disallows `/ops` and booking callbacks.
+- Use one `h1` per page. Expedition pages: name plus region. Support copy with `TouristTrip`, `FAQPage`, `BreadcrumbList`, and `Organization` JSON-LD that matches visible content.
+- Open Graph images should be route photography at 1200×630 with the expedition name burned in or composed, with a text alternative.
+
+## Performance
+
+- Hero images use `preload` only above the fold. Galleries lazy-load.
+- Cache published catalog reads. Revalidate when ops publishes or closes a departure.
+- Do not block the first expedition view on a client-side fetch of the same data.
+
+## Launch checks
+
+- `npm run lint` and `npm run build` succeed.
+- Homepage title, sitemap, and robots are production copy.
+- Draft expeditions and `/ops` are absent from the sitemap and carry `noindex` if they are reachable at all.
