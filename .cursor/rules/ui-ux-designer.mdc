@@ -18,13 +18,14 @@ Defined in `app/globals.css` under `@theme`:
 - `alpine-soft` secondary badges
 - `danger` warnings `#9d2c2c`
 
-The root font size is 18px and body copy is 1.125rem, so itinerary text, form labels, and buttons stay large. Headings use `font-display` and bold weights.
+The root font size is 16px and body copy is 1rem with relaxed line height. Headings use `font-display`, bold weight, and tight tracking.
 
 ## Type and layout
 
 - `Manrope` for titles. `Source Sans 3` for body, forms, and legal lines.
-- Page titles are display scale (`text-5xl` and up). Section titles are `text-4xl` to `text-6xl`. Card titles are at least `text-2xl`. Body on a card is at least `text-lg`.
-- Buttons are `min-h-14`, `text-lg`, and sentence case.
+- Hero and page titles are `text-4xl` on small screens and `text-5xl` at most on desktop. Section titles are `text-3xl` to `text-4xl`. Card titles are `text-xl` to `text-2xl`.
+- Body copy is `text-base` with `leading-relaxed`. Secondary details, eyebrows, and table labels are `text-sm`.
+- Buttons are `min-h-11`, `text-base`, medium weight, and sentence case.
 - Generous page padding. Cards are white, `rounded-3xl`, lightly bordered, and use a soft shadow. Hover lifts the card.
 - Sticky white header. The current section is alpine green.
 - A homepage hero may show a full-width photograph. The title, search, and actions sit on a white panel over the lower edge of the photo.

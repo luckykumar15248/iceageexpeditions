@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import type { FormEvent } from "react"
 
-const fieldClass = "min-h-14 w-full rounded-md border border-line bg-paper px-4 text-lg text-ink"
+const fieldClass = "min-h-11 w-full rounded-md border border-line bg-paper px-4 text-base text-ink"
 
 const corridors = [
   { value: "winter-spiti", label: "Winter Spiti" },
@@ -89,7 +89,7 @@ export function HeroSearch({
       </label>
       <button
         type="submit"
-        className="min-h-14 rounded-md bg-alpine px-6 text-lg font-semibold text-white hover:bg-alpine-deep"
+        className="min-h-11 rounded-md bg-alpine px-6 text-base font-medium text-white hover:bg-alpine-deep"
       >
         Find an expedition
       </button>

@@ -10,6 +10,7 @@ const expeditions = [
 
 const explore = [
   { href: "/about", label: "About us" },
+  { href: "/gallery", label: "Gallery" },
   { href: "/safety", label: "Safety and altitude guide" },
   { href: "/gear", label: "Gear and packing checklists" },
   { href: "/faq", label: "FAQ" },
@@ -36,27 +37,27 @@ export function Footer() {
         <div className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <p className="h-1 w-12 bg-alpine" aria-hidden="true" />
-            <p className="mt-5 font-display text-3xl font-bold leading-tight text-ink">
+            <p className="mt-5 font-display text-xl font-bold leading-tight tracking-tight text-ink sm:text-2xl">
               Ice Age Expeditions
-              <span className="mt-1 block text-xl font-semibold text-alpine">The Era of Trails</span>
+              <span className="mt-1 block text-base font-medium text-alpine">The Era of Trails</span>
             </p>
-            <p className="mt-4 max-w-md text-lg leading-relaxed text-muted">
+            <p className="mt-4 max-w-md text-base leading-relaxed text-muted">
               Guided Himalayan 4x4 convoys and custom motorbike expeditions, with support in the line and a date only
               when ops publishes one.
             </p>
-            <p className="mt-6 text-lg font-semibold text-ink">Base camp</p>
-            <p className="mt-2 max-w-md text-lg leading-relaxed text-muted">
+            <p className="mt-6 text-base font-medium text-ink">Base camp</p>
+            <p className="mt-2 max-w-md text-base leading-relaxed text-muted">
               Kullu / Bhuntar, Himachal Pradesh, India. The valley desk for briefings and vehicle handover. Not a street
               address you can navigate to without ops.
             </p>
           </div>
 
           <nav aria-label="Expeditions" className="lg:col-span-2">
-            <h2 className="font-display text-2xl font-bold text-ink">Expeditions</h2>
+            <h2 className="text-sm font-semibold tracking-wide text-ink uppercase">Expeditions</h2>
             <ul className="mt-4 space-y-1">
               {expeditions.map((link) => (
                 <li key={link.href}>
-                  <Link className="inline-flex min-h-11 items-center text-lg text-ink hover:text-alpine-deep" href={link.href}>
+                  <Link className="inline-flex min-h-11 items-center text-base text-ink hover:text-alpine-deep" href={link.href}>
                     {link.label}
                   </Link>
                 </li>
@@ -65,21 +66,21 @@ export function Footer() {
           </nav>
 
           <nav aria-label="Explore" className="lg:col-span-3">
-            <h2 className="font-display text-2xl font-bold text-ink">Explore</h2>
+            <h2 className="text-sm font-semibold tracking-wide text-ink uppercase">Explore</h2>
             <ul className="mt-4 space-y-1">
               {explore.map((link) => (
                 <li key={link.href}>
-                  <Link className="inline-flex min-h-11 items-center text-lg text-ink hover:text-alpine-deep" href={link.href}>
+                  <Link className="inline-flex min-h-11 items-center text-base text-ink hover:text-alpine-deep" href={link.href}>
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
-            <h2 className="mt-8 font-display text-2xl font-bold text-ink">Trust</h2>
+            <h2 className="mt-8 text-sm font-semibold tracking-wide text-ink uppercase">Trust</h2>
             <ul className="mt-4 space-y-1">
               {trust.map((link) => (
                 <li key={link.href}>
-                  <Link className="inline-flex min-h-11 items-center text-lg text-ink hover:text-alpine-deep" href={link.href}>
+                  <Link className="inline-flex min-h-11 items-center text-base text-ink hover:text-alpine-deep" href={link.href}>
                     {link.label}
                   </Link>
                 </li>
@@ -88,22 +89,22 @@ export function Footer() {
           </nav>
 
           <div className="lg:col-span-3">
-            <h2 className="font-display text-2xl font-bold text-ink">Contact</h2>
-            <p className="mt-4 text-lg leading-relaxed text-muted">
+            <h2 className="text-sm font-semibold tracking-wide text-ink uppercase">Contact</h2>
+            <p className="mt-4 text-base leading-relaxed text-muted">
               Phone, WhatsApp, and email are sent with your departure. They are not listed on this site.
             </p>
             <p className="mt-4">
-              <Link className="text-lg font-semibold text-alpine-deep hover:underline" href="/contact">
+              <Link className="text-base font-medium text-alpine-deep hover:underline" href="/contact">
                 Write to the desk
               </Link>
             </p>
             <p className="mt-2">
-              <Link className="text-lg font-semibold text-alpine-deep hover:underline" href="/enquire">
+              <Link className="text-base font-medium text-alpine-deep hover:underline" href="/enquire">
                 Request a quote
               </Link>
             </p>
-            <h3 className="mt-8 font-display text-2xl font-bold text-ink">On the road</h3>
-            <p className="mt-4 text-lg leading-relaxed text-muted">
+            <h3 className="mt-8 text-sm font-semibold tracking-wide text-ink uppercase">On the road</h3>
+            <p className="mt-4 text-base leading-relaxed text-muted">
               The emergency number is the one ops gives you before you leave Bhuntar. This page is not a rescue line,
               and it does not replace local emergency services.
             </p>
@@ -114,10 +115,10 @@ export function Footer() {
           aria-labelledby="trail-dispatch-heading"
           className="mt-14 rounded-3xl border border-line bg-canvas px-6 py-8 sm:px-10"
         >
-          <h2 id="trail-dispatch-heading" className="font-display text-3xl font-bold text-ink">
+          <h2 id="trail-dispatch-heading" className="font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">
             Expedition dispatches
           </h2>
-          <p className="mt-3 max-w-3xl text-lg leading-relaxed text-muted">
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-muted">
             Subscribe to expedition dispatches and seasonal opening alerts. This opens an enquiry for the desk. It does
             not add you to a mailing list.
           </p>
@@ -132,12 +133,12 @@ export function Footer() {
                 required
                 autoComplete="email"
                 placeholder="you@example.com"
-                className="min-h-14 rounded-md border border-line bg-paper px-4 text-lg font-normal text-ink"
+                className="min-h-11 rounded-md border border-line bg-paper px-4 text-base font-normal text-ink"
               />
             </label>
             <button
               type="submit"
-              className="min-h-14 rounded-md bg-alpine px-7 text-lg font-semibold text-white hover:bg-alpine-deep"
+              className="min-h-11 rounded-md bg-alpine px-5 text-base font-medium text-white hover:bg-alpine-deep"
             >
               Subscribe
             </button>
@@ -161,12 +162,12 @@ export function Footer() {
                 </li>
               ))}
             </ul>
-            <p className="mt-4 max-w-xl text-lg text-muted">
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-muted">
               Instagram, YouTube, Facebook, and X are confirmed by the desk. They are not published as guessed profile
               links.
             </p>
           </div>
-          <p className="text-lg text-ink lg:max-w-sm lg:text-right">
+          <p className="text-base text-ink lg:max-w-sm lg:text-right">
             © 2026 Ice Age Expeditions. All rights reserved. Built for the high Himalayas.
           </p>
         </div>

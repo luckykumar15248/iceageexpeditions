@@ -16,15 +16,23 @@
 
 :root {
   color-scheme: light;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-size: 1.125rem;
+  font-size: 1rem;
   line-height: 1.65;
+  letter-spacing: 0.012em;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 ::selection {

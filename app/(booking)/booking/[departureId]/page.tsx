@@ -18,17 +18,17 @@ export default async function BookingPage({ params }: PageProps<"/booking/[depar
       {departure === "offline" ? <OfflineNote title="Booking is offline" /> : null}
       {departure === null ? (
         <>
-          <h1 className="font-display text-5xl font-bold text-ink sm:text-6xl">Departure not found</h1>
-          <Link href="/expeditions" className="mt-6 inline-flex text-lg font-semibold text-alpine-deep underline">
+          <h1 className="font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">Departure not found</h1>
+          <Link href="/expeditions" className="mt-6 inline-flex text-base font-medium text-alpine-deep underline">
             Back to expeditions
           </Link>
         </>
       ) : null}
       {departure === "closed" ? (
         <>
-          <h1 className="font-display text-5xl font-bold text-ink sm:text-6xl">This departure is not open</h1>
-          <p className="mt-5 text-xl text-muted">It may be full, closed, or already underway. Ask from the route page instead.</p>
-          <Link href="/expeditions" className="mt-8 inline-flex min-h-14 items-center rounded-md bg-alpine px-6 text-lg font-semibold text-white hover:bg-alpine-deep">
+          <h1 className="font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">This departure is not open</h1>
+          <p className="mt-5 text-base leading-relaxed text-muted">It may be full, closed, or already underway. Ask from the route page instead.</p>
+          <Link href="/expeditions" className="mt-8 inline-flex min-h-11 items-center rounded-md bg-alpine px-6 text-base font-medium text-white hover:bg-alpine-deep">
             See expeditions
           </Link>
         </>
@@ -36,18 +36,18 @@ export default async function BookingPage({ params }: PageProps<"/booking/[depar
       {departure && departure !== "offline" && departure !== "closed" ? (
         <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
           <aside className="rounded-3xl border border-line border-l-4 border-l-alpine bg-paper p-8 shadow-[0_12px_32px_rgba(26,29,27,0.07)] lg:sticky lg:top-28">
-            <p className="text-base font-semibold tracking-[0.14em] text-alpine uppercase">{departure.vehicleLabel}</p>
-            <h1 className="mt-3 font-display text-4xl font-bold leading-tight text-ink sm:text-5xl">{departure.expeditionTitle}</h1>
-            <p className="mt-5 text-lg leading-relaxed text-muted">
+            <p className="text-sm font-semibold tracking-wide text-alpine uppercase">{departure.vehicleLabel}</p>
+            <h1 className="mt-3 font-display text-3xl font-bold leading-tight tracking-tight text-ink sm:text-4xl">{departure.expeditionTitle}</h1>
+            <p className="mt-5 text-base leading-relaxed text-muted">
               {departure.startLabel} – {departure.endLabel}. Meet at {departure.meetingPoint}. {departure.inventoryLabel}.
             </p>
             <p className="mt-5 text-2xl font-bold text-ink">
               {departure.priceLabel} per place · deposit {departure.depositLabel}
             </p>
-            <p className="mt-4 text-lg text-muted">
+            <p className="mt-4 text-base leading-relaxed text-muted">
               Sending this form creates a request. It does not capture a payment or confirm the seat.
             </p>
-            <Link href={`/expeditions/${departure.expeditionSlug}`} className="mt-6 inline-flex text-lg font-semibold text-alpine-deep hover:underline">
+            <Link href={`/expeditions/${departure.expeditionSlug}`} className="mt-6 inline-flex text-base font-medium text-alpine-deep hover:underline">
               Back to the route
             </Link>
           </aside>

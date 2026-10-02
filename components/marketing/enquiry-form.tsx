@@ -33,8 +33,8 @@ export function EnquiryForm({
   if (state.status === "success") {
     return (
       <div className="rounded-3xl border border-alpine bg-alpine-soft p-8" role="status">
-        <h2 className="font-display text-4xl font-bold text-ink">{heading}</h2>
-        <p className="mt-4 text-lg text-muted">{state.message}</p>
+        <h2 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">{heading}</h2>
+        <p className="mt-4 text-base leading-relaxed text-muted">{state.message}</p>
       </div>
     )
   }
@@ -42,13 +42,13 @@ export function EnquiryForm({
   return (
     <form action={action} className="grid gap-6 rounded-3xl border border-line bg-paper p-8 shadow-[0_12px_32px_rgba(26,29,27,0.07)]">
       <div>
-        <h2 className="font-display text-4xl font-bold text-ink">{heading}</h2>
-        <p className="mt-3 text-lg text-muted">
+        <h2 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">{heading}</h2>
+        <p className="mt-3 text-base leading-relaxed text-muted">
           Tell us the month, the vehicle, and how many people. We will not invent an open pass to make the answer sound better.
         </p>
       </div>
       {state.status === "error" ? (
-        <p className="rounded-2xl border border-danger/40 bg-paper px-4 py-3 text-lg text-danger" role="alert">
+        <p className="rounded-2xl border border-danger/40 bg-paper px-4 py-3 text-base text-danger" role="alert">
           {state.message}
         </p>
       ) : null}
@@ -75,7 +75,7 @@ export function EnquiryForm({
           <select
             name="departureId"
             defaultValue={state.values.departureId}
-            className="min-h-14 rounded-md border border-line bg-paper px-4 text-lg text-ink"
+            className="min-h-11 rounded-md border border-line bg-paper px-4 text-base text-ink"
           >
             <option value="">No specific date</option>
             {departures.map((departure) => (
@@ -91,7 +91,7 @@ export function EnquiryForm({
         <select
           name="kind"
           defaultValue={state.values.kind}
-          className="min-h-14 rounded-md border border-line bg-paper px-4 text-lg text-ink"
+          className="min-h-11 rounded-md border border-line bg-paper px-4 text-base text-ink"
         >
           <option value="GENERAL">General question</option>
           <option value="WAITLIST">Waitlist for a full or closed batch</option>
@@ -104,7 +104,7 @@ export function EnquiryForm({
           <select
             name="vehicleClass"
             defaultValue={state.values.vehicleClass || defaultVehicle}
-            className={`min-h-14 rounded-md border bg-paper px-4 text-lg text-ink ${state.fieldErrors.vehicleClass ? "border-danger" : "border-line"}`}
+            className={`min-h-11 rounded-md border bg-paper px-4 text-base text-ink ${state.fieldErrors.vehicleClass ? "border-danger" : "border-line"}`}
             aria-invalid={state.fieldErrors.vehicleClass ? true : undefined}
             aria-describedby={state.fieldErrors.vehicleClass ? "vehicleClass-error" : undefined}
           >
@@ -125,7 +125,7 @@ export function EnquiryForm({
           <select
             name="experience"
             defaultValue={state.values.experience}
-            className={`min-h-14 rounded-md border bg-paper px-4 text-lg text-ink ${state.fieldErrors.experience ? "border-danger" : "border-line"}`}
+            className={`min-h-11 rounded-md border bg-paper px-4 text-base text-ink ${state.fieldErrors.experience ? "border-danger" : "border-line"}`}
             aria-invalid={state.fieldErrors.experience ? true : undefined}
             aria-describedby={state.fieldErrors.experience ? "experience-error" : undefined}
           >
@@ -151,7 +151,7 @@ export function EnquiryForm({
           defaultValue={state.values.message || defaultMessage}
           aria-invalid={state.fieldErrors.message ? true : undefined}
           aria-describedby={state.fieldErrors.message ? "message-error" : undefined}
-          className={`rounded-md border bg-paper px-4 py-4 text-lg text-ink ${state.fieldErrors.message ? "border-danger" : "border-line"}`}
+          className={`rounded-md border bg-paper px-4 py-4 text-base text-ink ${state.fieldErrors.message ? "border-danger" : "border-line"}`}
         />
         {state.fieldErrors.message ? (
           <span id="message-error" className="text-base font-normal text-danger" role="alert">
@@ -169,7 +169,7 @@ export function EnquiryForm({
               defaultValue={state.values.fitnessNote}
               aria-invalid={state.fieldErrors.fitnessNote ? true : undefined}
               aria-describedby="fitness-hint"
-              className={`rounded-md border bg-paper px-4 py-4 text-lg font-normal text-ink ${state.fieldErrors.fitnessNote ? "border-danger" : "border-line"}`}
+              className={`rounded-md border bg-paper px-4 py-4 text-base font-normal text-ink ${state.fieldErrors.fitnessNote ? "border-danger" : "border-line"}`}
             />
             <span id="fitness-hint" className="text-base font-normal text-muted">
               A few honest sentences. This is not a doctor’s clearance, and it stays off the public page.
@@ -181,7 +181,7 @@ export function EnquiryForm({
             ) : null}
           </label>
           <div>
-            <label className="flex min-h-14 items-start gap-3 text-lg font-normal text-ink">
+            <label className="flex min-h-11 items-start gap-3 text-base font-normal text-ink">
               <input type="checkbox" name="fitnessAck" value="yes" className="mt-1 size-5" />
               I understand altitude illness is possible and this note is not a doctor’s clearance.
             </label>
@@ -196,7 +196,7 @@ export function EnquiryForm({
       <button
         type="submit"
         disabled={pending}
-        className="min-h-14 rounded-md bg-alpine px-6 text-lg font-semibold text-white hover:bg-alpine-deep disabled:opacity-60"
+        className="min-h-11 rounded-md bg-alpine px-6 text-base font-medium text-white hover:bg-alpine-deep disabled:opacity-60"
       >
         {pending ? "Sending…" : "Send enquiry"}
       </button>
@@ -236,7 +236,7 @@ function Field({
         defaultValue={value}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        className={`min-h-14 rounded-md border bg-paper px-4 text-lg text-ink ${error ? "border-danger" : "border-line"}`}
+        className={`min-h-11 rounded-md border bg-paper px-4 text-base text-ink ${error ? "border-danger" : "border-line"}`}
         {...props}
       />
       {hint ? (

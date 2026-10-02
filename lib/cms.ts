@@ -106,6 +106,14 @@ function parseStatus(value: string): ExpeditionStatus {
   throw new DomainError(DomainErrorCode.CONTENT_INVALID, "Status must be draft or published")
 }
 
+function movingHoursValue(value: number): string {
+  const hours = Number(value)
+  if (!Number.isFinite(hours)) {
+    throw new DomainError(DomainErrorCode.CONTENT_INVALID, "Moving hours must be between 0 and 18")
+  }
+  return hours.toFixed(1)
+}
+
 function rupeesToPaisa(value: string, label: string): number {
   const trimmed = value.trim()
   if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) {
@@ -252,7 +260,7 @@ export async function saveExpedition(input: CmsExpeditionInput): Promise<{ id: s
           body: day.body.trim(),
           sleepStop: day.sleepStop.trim(),
           sleepAltitudeMeters: day.sleepAltitudeMeters,
-          movingHours: day.movingHours.toFixed(1),
+          movingHours: movingHoursValue(day.movingHours),
         })),
       })
     }

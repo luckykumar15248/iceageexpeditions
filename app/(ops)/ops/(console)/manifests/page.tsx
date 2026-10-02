@@ -18,12 +18,12 @@ export default async function OpsManifestsPage() {
       {snapshot.data === "offline" ? (
         <OpsOffline />
       ) : snapshot.data.length === 0 ? (
-        <p className="mt-10 text-lg text-muted">No bookings are on a manifest yet.</p>
+        <p className="mt-10 text-base leading-relaxed text-muted">No bookings are on a manifest yet.</p>
       ) : (
         <div className="mt-10 overflow-x-auto rounded-3xl border border-line bg-paper shadow-[0_12px_32px_rgba(26,29,27,0.07)]">
-          <table className="w-full min-w-[44rem] text-left text-lg">
+          <table className="w-full min-w-[44rem] text-left text-base">
             <thead>
-              <tr className="border-b border-line text-base uppercase tracking-wide text-muted">
+              <tr className="border-b border-line text-xs font-medium uppercase tracking-wide text-muted">
                 <th className="px-6 py-4 font-semibold">Departure</th>
                 <th className="px-6 py-4 font-semibold">Date</th>
                 <th className="px-6 py-4 font-semibold">Party</th>

@@ -109,7 +109,7 @@ export function ExpeditionSlider({ slides, label, autoPlay = false, intervalMs =
         <button
           type="button"
           data-slider-control="true"
-          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-paper text-lg font-semibold text-ink shadow-sm hover:border-alpine hover:text-alpine"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-paper text-base font-medium text-ink shadow-sm hover:border-alpine hover:text-alpine"
           aria-label="Previous slide"
           onClick={() => go(-1)}
         >
@@ -118,7 +118,7 @@ export function ExpeditionSlider({ slides, label, autoPlay = false, intervalMs =
         <button
           type="button"
           data-slider-control="true"
-          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-paper text-lg font-semibold text-ink shadow-sm hover:border-alpine hover:text-alpine"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-paper text-base font-medium text-ink shadow-sm hover:border-alpine hover:text-alpine"
           aria-label="Next slide"
           onClick={() => go(1)}
         >
@@ -162,9 +162,9 @@ export function ExpeditionSlider({ slides, label, autoPlay = false, intervalMs =
                   </div>
                   <div className="flex flex-1 flex-col gap-4 p-7">
                     {slide.eyebrow ? (
-                      <p className="text-base font-semibold tracking-[0.14em] text-alpine uppercase">{slide.eyebrow}</p>
+                      <p className="text-sm font-semibold tracking-wide text-alpine uppercase">{slide.eyebrow}</p>
                     ) : null}
-                    <h3 className="font-display text-3xl font-bold leading-tight text-ink">{slide.title}</h3>
+                    <h3 className="font-display text-xl font-bold leading-tight tracking-tight text-ink sm:text-2xl">{slide.title}</h3>
                     <ul className="flex flex-wrap gap-2">
                       {slide.badges.map((badge) => (
                         <li key={badge.label} className="rounded-full bg-alpine-soft px-3 py-1.5 text-sm font-semibold text-alpine-deep">
@@ -172,11 +172,11 @@ export function ExpeditionSlider({ slides, label, autoPlay = false, intervalMs =
                         </li>
                       ))}
                     </ul>
-                    {slide.note ? <p className="text-lg leading-relaxed text-muted">{slide.note}</p> : null}
+                    {slide.note ? <p className="text-base leading-relaxed text-muted">{slide.note}</p> : null}
                     <Link
                       href={slide.href}
                       tabIndex={visible ? undefined : -1}
-                      className="mt-auto inline-flex min-h-14 items-center self-start rounded-md bg-alpine px-6 text-lg font-semibold text-white hover:bg-alpine-deep"
+                      className="mt-auto inline-flex min-h-11 items-center self-start rounded-md bg-alpine px-6 text-base font-medium text-white hover:bg-alpine-deep"
                     >
                       {slide.cta}
                     </Link>

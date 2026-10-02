@@ -25,7 +25,7 @@ export function UpcomingDepartures({ departures }: { departures: UpcomingDepartu
           </div>
           <div className="flex flex-1 flex-col p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-alpine">{departure.vehicleLabel}</p>
-            <h3 className="mt-1 font-display text-lg font-bold leading-tight text-ink">{departure.title}</h3>
+            <h3 className="mt-1 font-display text-base font-bold leading-tight text-ink">{departure.title}</h3>
             <p className="mt-2 text-sm text-muted">
               {departure.startLabel} – {departure.endLabel}
             </p>

@@ -32,9 +32,9 @@ export function TrustPoints() {
           <div className="absolute inset-x-0 top-0 h-1.5 bg-alpine" />
           <p className="font-display text-4xl font-bold text-alpine">{point.index}</p>
           <h3 className="mt-5 font-display text-2xl font-bold leading-snug text-ink">{point.title}</h3>
-          <p className="mt-4 text-lg leading-relaxed text-muted">{point.body}</p>
+          <p className="mt-4 text-base leading-relaxed text-muted">{point.body}</p>
           {"href" in point ? (
-            <Link href={point.href} className="mt-5 inline-flex min-h-12 items-center text-lg font-semibold text-alpine-deep hover:underline">
+            <Link href={point.href} className="mt-5 inline-flex min-h-12 items-center text-base font-medium text-alpine-deep hover:underline">
               Read the safety notes
             </Link>
           ) : null}

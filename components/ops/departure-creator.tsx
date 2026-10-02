@@ -4,18 +4,18 @@ import { useActionState } from "react"
 import { createDepartureAction, type CmsFormState } from "@/app/(ops)/ops/cms-actions"
 
 const initial: CmsFormState = { message: "", ok: false }
-const field = "min-h-14 rounded-md border border-line bg-paper px-4 text-lg font-normal text-ink"
+const field = "min-h-11 rounded-md border border-line bg-paper px-4 text-base font-normal text-ink"
 
 export function DepartureCreator({ expeditionId }: { expeditionId: string }) {
   const [state, action, pending] = useActionState(createDepartureAction, initial)
   return (
     <form action={action} className="mt-8 grid gap-5 rounded-3xl border border-line bg-paper p-8 shadow-[0_12px_32px_rgba(26,29,27,0.07)]">
-      <h2 className="font-display text-3xl font-bold text-ink">Add a departure</h2>
-      <p className="text-lg text-muted">
+      <h2 className="font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">Add a departure</h2>
+      <p className="text-base leading-relaxed text-muted">
         Capacity is SUV seats or motorbike slots for this vehicle class. A new batch starts with every place still open. Saving a draft does not make it bookable.
       </p>
       {state.message ? (
-        <p className="rounded-2xl border border-danger/40 px-4 py-3 text-lg text-danger" role="alert">
+        <p className="rounded-2xl border border-danger/40 px-4 py-3 text-base text-danger" role="alert">
           {state.message}
         </p>
       ) : null}
@@ -57,7 +57,7 @@ export function DepartureCreator({ expeditionId }: { expeditionId: string }) {
         Cancellation terms
         <textarea name="policySnapshot" required rows={4} className={`${field} min-h-32 py-3`} />
       </label>
-      <button type="submit" disabled={pending} className="min-h-14 rounded-md bg-alpine px-7 text-lg font-semibold text-white hover:bg-alpine-deep disabled:opacity-60">
+      <button type="submit" disabled={pending} className="min-h-11 rounded-md bg-alpine px-5 text-base font-medium text-white hover:bg-alpine-deep disabled:opacity-60">
         {pending ? "Saving…" : "Add departure"}
       </button>
     </form>

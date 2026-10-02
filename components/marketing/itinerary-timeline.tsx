@@ -2,7 +2,7 @@ import type { ItineraryStop } from "@/lib/catalog"
 
 export function ItineraryTimeline({ days }: { days: ItineraryStop[] }) {
   if (days.length === 0) {
-    return <p className="text-xl text-muted">The day-by-day brief for this route is still being written.</p>
+    return <p className="text-base leading-relaxed text-muted">The day-by-day brief for this route is still being written.</p>
   }
 
   return (
@@ -15,7 +15,7 @@ export function ItineraryTimeline({ days }: { days: ItineraryStop[] }) {
                 <span className="block font-display text-2xl font-bold text-ink">
                   Day {day.dayNumber} — {day.title}
                 </span>
-                <span className="mt-2 block text-lg text-alpine-deep">
+                <span className="mt-2 block text-base text-alpine-deep">
                   Sleep at {day.sleepStop}, {day.sleepAltitudeMeters.toLocaleString("en-IN")} m · {day.movingHoursLabel}{" "}
                   rolling
                 </span>
@@ -23,7 +23,7 @@ export function ItineraryTimeline({ days }: { days: ItineraryStop[] }) {
               <span className="text-base font-semibold text-alpine group-open:hidden">Show</span>
               <span className="hidden text-base font-semibold text-alpine group-open:inline">Hide</span>
             </summary>
-            <p className="px-7 pb-7 text-lg leading-relaxed whitespace-pre-line text-muted">{day.body}</p>
+            <p className="px-7 pb-7 text-base leading-relaxed whitespace-pre-line text-muted">{day.body}</p>
           </details>
         </li>
       ))}

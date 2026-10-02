@@ -27,22 +27,22 @@ export function ExpeditionCardView({ expedition }: { expedition: ExpeditionCard 
         <p className="text-base font-semibold text-alpine">
           {expedition.vehicleLabel} · {expedition.regionName}
         </p>
-        <h2 className="font-display text-3xl font-bold leading-tight text-ink">
+        <h2 className="font-display text-xl font-bold leading-tight tracking-tight text-ink sm:text-2xl">
           <Link href={`/expeditions/${expedition.slug}`} className="hover:text-alpine">
             {expedition.title}
           </Link>
         </h2>
-        <dl className="grid grid-cols-2 gap-5 text-lg">
+        <dl className="grid grid-cols-2 gap-5 text-base">
           <div>
-            <dt className="text-base text-muted">Duration</dt>
+            <dt className="text-sm text-muted">Duration</dt>
             <dd className="font-semibold text-ink">{expedition.durationDays} days</dd>
           </div>
           <div>
-            <dt className="text-base text-muted">Max altitude</dt>
+            <dt className="text-sm text-muted">Max altitude</dt>
             <dd className="font-semibold text-ink">{expedition.maxAltitudeMeters.toLocaleString("en-IN")} m</dd>
           </div>
           <div>
-            <dt className="text-base text-muted">Difficulty</dt>
+            <dt className="text-sm text-muted">Difficulty</dt>
             <dd>
               <span className="inline-flex rounded-full bg-alpine-soft px-3 py-1.5 text-sm font-semibold text-alpine-deep">
                 {expedition.difficultyLabel}
@@ -50,13 +50,13 @@ export function ExpeditionCardView({ expedition }: { expedition: ExpeditionCard 
             </dd>
           </div>
           <div>
-            <dt className="text-base text-muted">From</dt>
+            <dt className="text-sm text-muted">From</dt>
             <dd className="font-semibold text-ink">{expedition.fromPriceLabel ?? "On enquiry"}</dd>
           </div>
         </dl>
         <Link
           href={`/expeditions/${expedition.slug}#itinerary`}
-          className="mt-auto inline-flex min-h-14 items-center justify-center rounded-md bg-alpine px-5 text-lg font-semibold text-white hover:bg-alpine-deep"
+          className="mt-auto inline-flex min-h-11 items-center justify-center rounded-md bg-alpine px-5 text-base font-medium text-white hover:bg-alpine-deep"
         >
           View itinerary
         </Link>

@@ -2,7 +2,58 @@
 
 import { ExpeditionImage } from "@/components/expedition-image"
 import Link from "next/link"
-import { useCallback, useEffect, useId, useRef, useState, type FocusEvent, type PointerEvent, type ReactNode } from "react"
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type FocusEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react"
+
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)"
+const NARROW_SCREEN = "(max-width: 640px)"
+
+type NetworkInformation = EventTarget & { saveData?: boolean; effectiveType?: string }
+
+function networkInfo(): NetworkInformation | undefined {
+  return (navigator as Navigator & { connection?: NetworkInformation }).connection
+}
+
+function subscribeReducedMotion(onChange: () => void) {
+  const query = window.matchMedia(REDUCED_MOTION)
+  query.addEventListener("change", onChange)
+  return () => query.removeEventListener("change", onChange)
+}
+
+function reducedMotionSnapshot() {
+  return window.matchMedia(REDUCED_MOTION).matches
+}
+
+function subscribeVideoConditions(onChange: () => void) {
+  const motion = window.matchMedia(REDUCED_MOTION)
+  const narrow = window.matchMedia(NARROW_SCREEN)
+  const network = networkInfo()
+  motion.addEventListener("change", onChange)
+  narrow.addEventListener("change", onChange)
+  network?.addEventListener("change", onChange)
+  return () => {
+    motion.removeEventListener("change", onChange)
+    narrow.removeEventListener("change", onChange)
+    network?.removeEventListener("change", onChange)
+  }
+}
+
+/** Phones, reduced motion, Save-Data, and 2G get the poster still instead of a background video. */
+function videoAllowedSnapshot() {
+  if (window.matchMedia(REDUCED_MOTION).matches || window.matchMedia(NARROW_SCREEN).matches) return false
+  const network = networkInfo()
+  if (network?.saveData) return false
+  return network?.effectiveType !== "2g" && network?.effectiveType !== "slow-2g"
+}
 
 export type HeroSlide = {
   id: string
@@ -13,6 +64,12 @@ export type HeroSlide = {
   alt: string
   exploreHref: string
   departuresHref: string
+  /** Optional override for the primary button label. Defaults to "Explore expedition". */
+  exploreLabel?: string
+  /** Optional override for the secondary button label. Defaults to "View departures". */
+  departuresLabel?: string
+  /** Optional background video URL. When set, renders a muted autoplay loop; image is used as poster. */
+  videoUrl?: string
 }
 
 type HeroSliderProps = {
@@ -27,7 +84,9 @@ export function HeroSlider({ slides, search, intervalMs = 7000 }: HeroSliderProp
   const [index, setIndex] = useState(0)
   const [pausedHover, setPausedHover] = useState(false)
   const [pausedFocus, setPausedFocus] = useState(false)
-  const [reduceMotion, setReduceMotion] = useState(false)
+  const reduceMotion = useSyncExternalStore(subscribeReducedMotion, reducedMotionSnapshot, () => false)
+  const allowVideo = useSyncExternalStore(subscribeVideoConditions, videoAllowedSnapshot, () => false)
+  const [failedVideoIds, setFailedVideoIds] = useState<ReadonlySet<string>>(new Set())
   const [announcement, setAnnouncement] = useState("")
 
   const count = slides.length
@@ -45,14 +104,6 @@ export function HeroSlider({ slides, search, intervalMs = 7000 }: HeroSliderProp
     },
     [count, slides],
   )
-
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)")
-    const apply = () => setReduceMotion(query.matches)
-    apply()
-    query.addEventListener("change", apply)
-    return () => query.removeEventListener("change", apply)
-  }, [])
 
   useEffect(() => {
     if (pausedHover || pausedFocus || reduceMotion || count < 2) return
@@ -99,6 +150,7 @@ export function HeroSlider({ slides, search, intervalMs = 7000 }: HeroSliderProp
       <div className="relative h-[58vh] min-h-[22rem] overflow-hidden bg-canvas">
         {slides.map((item, itemIndex) => {
           const active = itemIndex === safeIndex
+          const hasVideo = Boolean(item.videoUrl) && allowVideo && !failedVideoIds.has(item.id)
           return (
             <div
               key={item.id}
@@ -106,14 +158,29 @@ export function HeroSlider({ slides, search, intervalMs = 7000 }: HeroSliderProp
               aria-hidden={active ? undefined : true}
               inert={active ? undefined : true}
             >
-              <ExpeditionImage
-                src={item.image}
-                alt={item.alt}
-                fill
-                preload={itemIndex === 0}
-                sizes="100vw"
-                className="object-cover"
-              />
+              {hasVideo && active ? (
+                <video
+                  aria-hidden="true"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  poster={item.image}
+                  className="h-full w-full object-cover"
+                  onError={() => setFailedVideoIds((current) => new Set([...current, item.id]))}
+                >
+                  <source src={item.videoUrl} />
+                </video>
+              ) : (
+                <ExpeditionImage
+                  src={item.image}
+                  alt={item.alt}
+                  fill
+                  preload={itemIndex === 0}
+                  sizes="100vw"
+                  className="object-cover"
+                />
+              )}
             </div>
           )
         })}
@@ -142,25 +209,27 @@ export function HeroSlider({ slides, search, intervalMs = 7000 }: HeroSliderProp
 
       <div className="relative z-10 mx-auto -mt-20 w-full max-w-7xl px-4 pb-8 sm:px-6 sm:pb-12">
         <div className="rounded-3xl border border-line bg-paper px-6 py-8 shadow-[0_18px_50px_rgba(26,29,27,0.08)] sm:px-10 sm:py-12">
-          <p className="text-base font-semibold tracking-[0.16em] text-alpine uppercase">The Era of Trails</p>
+          <p className="text-sm font-semibold tracking-wide text-alpine uppercase">The Era of Trails</p>
           <p className="mt-4 text-base font-semibold tracking-[0.12em] text-muted uppercase">{slide.kicker}</p>
-          <h1 id={labelId} className="mt-3 max-w-4xl font-display text-5xl leading-[1.05] font-bold tracking-tight text-ink sm:text-6xl lg:text-7xl">
+          <h1 id={labelId} className="mt-3 max-w-4xl font-display text-4xl leading-tight font-bold tracking-tight text-ink sm:text-5xl">
             {slide.title}
           </h1>
-          <p className="mt-5 max-w-3xl text-xl leading-relaxed text-muted">{slide.body}</p>
+          <p className="mt-5 max-w-3xl text-base leading-relaxed text-muted">{slide.body}</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href={slide.exploreHref}
-              className="inline-flex min-h-14 items-center justify-center rounded-md bg-alpine px-7 text-lg font-semibold text-white hover:bg-alpine-deep"
+              className="inline-flex min-h-11 items-center justify-center rounded-md bg-alpine px-5 text-base font-medium text-white hover:bg-alpine-deep"
             >
-              Explore expedition
+              {slide.exploreLabel ?? "Explore expedition"}
             </Link>
-            <Link
-              href={slide.departuresHref}
-              className="inline-flex min-h-14 items-center justify-center rounded-md border border-line bg-paper px-7 text-lg font-semibold text-ink hover:border-alpine hover:text-alpine"
-            >
-              View departures
-            </Link>
+            {slide.departuresHref ? (
+              <Link
+                href={slide.departuresHref}
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-line bg-paper px-5 text-base font-medium text-ink hover:border-alpine hover:text-alpine"
+              >
+                {slide.departuresLabel ?? "View departures"}
+              </Link>
+            ) : null}
           </div>
 
           <div className="mt-8 flex items-center gap-1" role="group" aria-label="Hero slides">

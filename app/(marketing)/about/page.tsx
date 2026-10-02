@@ -11,9 +11,9 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-16 sm:px-6 sm:py-20">
-      <p className="text-base font-semibold tracking-[0.14em] text-alpine uppercase">The Era of Trails</p>
-      <h1 className="mt-3 font-display text-5xl font-bold text-ink sm:text-7xl">About Ice Age Expeditions</h1>
-      <div className="mt-8 space-y-5 rounded-3xl border border-line bg-paper p-8 text-xl leading-relaxed text-muted shadow-[0_12px_32px_rgba(26,29,27,0.07)]">
+      <p className="text-sm font-semibold tracking-wide text-alpine uppercase">The Era of Trails</p>
+      <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">About Ice Age Expeditions</h1>
+      <div className="mt-8 space-y-5 rounded-3xl border border-line bg-paper p-8 text-base leading-relaxed text-muted shadow-[0_12px_32px_rgba(26,29,27,0.07)]">
         <p>
           Ice Age Expeditions takes small groups into the high Himalaya by 4x4 SUV and by motorbike. The work is the
           road, the night’s altitude, and getting everyone back when the weather turns.
@@ -30,7 +30,7 @@ export default function AboutPage() {
       </div>
       <Link
         href="/expeditions"
-        className="mt-8 inline-flex min-h-14 items-center rounded-md bg-alpine px-6 text-lg font-semibold text-white hover:bg-alpine-deep"
+        className="mt-8 inline-flex min-h-11 items-center rounded-md bg-alpine px-6 text-base font-medium text-white hover:bg-alpine-deep"
       >
         Browse expeditions
       </Link>

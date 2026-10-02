@@ -18,14 +18,41 @@ export const corridors = [
     keywords: ["zanskar", "chadar"],
   },
   {
-    id: "manali-leh",
-    title: "Manali–Leh high passes",
-    kicker: "Ladakh loop",
-    body: "The high-pass road between Manali and Leh, run as a 4x4 convoy or a motorbike group with support. Passes close for snow and slides. Both vehicle classes stay separate departures.",
+    id: "zanskar ladakh expedition",
+    title: "Zanskar Valley & Frozen Trails",
+    kicker: "Zanskar loop",
+    body: "Zanskar’s rugged valley, including the season when the Chadar ice is the route. Ice changes by the day. This card is not a confirmation that a crossing is on.",
     image: "/imagery/motorbike-high-road.svg",
-    alt: "A motorbike on a high Himalayan pass road",
-    keywords: ["leh", "manali", "ladakh"],
+    alt: "Rugged mountain terrain and river valleys of Zanskar",
+    keywords: ["zanskar", "chadar", "ladakh", "frozen river"],
   },
+  {
+    id: "Sach pass Expedition",
+    title: "Sach Pass & Pangi Valley",
+    kicker: "Himachal backcountry",
+    body: "One of the most challenging and raw mountain passes in Himachal, carved through sheer cliffs and heavy snow walls. Navigated strictly by experienced 4x4 convoys and support teams.",
+    image: "/imagery/motorbike-high-road.svg",
+    alt: "Winding treacherous high-altitude road through Sach Pass",
+    keywords: ["sach pass", "pangi valley", "himachal", "offroad"],
+  },
+  {
+    id: "Adi kailash expedition",
+    title: "Adi Kailash & Om Parvat",
+    kicker: "Inner Kumaon trail",
+    body: "High-altitude expedition near the Tibetan border, featuring the mystical Om Parvat. Remote terrain requiring strict acclimatization, permits, and careful convoy management.",
+    image: "/imagery/motorbike-high-road.svg",
+    alt: "Snow-capped sacred peaks in the Kumaon region",
+    keywords: ["adi kailash", "om parvat", "kumaon", "himalayas"],
+  },
+  {
+    id: "North east Expedition",
+    title: "Eastern Himalayan Frontiers",
+    kicker: "Arunachal & Sikkim loop",
+    body: "Dense cloud forests, high-altitude mountain passes, and remote tribal valleys across the eastern frontier. Weather and road conditions demand resilient support and deep local tracking.",
+    image: "/imagery/motorbike-high-road.svg",
+    alt: "Misty mountain ranges and river gorges of the North East",
+    keywords: ["north east", "arunachal", "sikkim", "eastern himalayas"],
+  }
 ] as const
 
 export const faqItems = [

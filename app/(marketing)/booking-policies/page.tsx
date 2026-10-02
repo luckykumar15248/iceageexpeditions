@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 export default function BookingPoliciesPage() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-16 sm:px-6 sm:py-20">
-      <p className="text-base font-semibold tracking-[0.14em] text-alpine uppercase">Trust</p>
-      <h1 className="mt-3 font-display text-5xl font-bold text-ink sm:text-7xl">Booking policies</h1>
-      <div className="mt-8 space-y-5 rounded-3xl border border-line bg-paper p-8 text-lg leading-relaxed text-muted shadow-[0_12px_32px_rgba(26,29,27,0.07)] sm:p-10">
+      <p className="text-sm font-semibold tracking-wide text-alpine uppercase">Trust</p>
+      <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">Booking policies</h1>
+      <div className="mt-8 space-y-5 rounded-3xl border border-line bg-paper p-8 text-base leading-relaxed text-muted shadow-[0_12px_32px_rgba(26,29,27,0.07)] sm:p-10">
         <p>
           A booking request holds a request, not a captured payment. Ops accepts it only when the departure is open and
           the seats or bike slots are still there. The deposit and the balance are the amounts shown on that departure,

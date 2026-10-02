@@ -22,13 +22,13 @@ export default function FaqPage() {
           })),
         }}
       />
-      <p className="text-base font-semibold tracking-[0.14em] text-alpine uppercase">Help</p>
-      <h1 className="mt-3 font-display text-5xl font-bold text-ink sm:text-7xl">FAQ</h1>
+      <p className="text-sm font-semibold tracking-wide text-alpine uppercase">Help</p>
+      <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">FAQ</h1>
       <div className="mt-12 flex flex-col gap-5">
         {faqItems.map((item) => (
           <section key={item.question} className="rounded-3xl border border-line bg-paper p-8 shadow-[0_12px_32px_rgba(26,29,27,0.07)]">
-            <h2 className="font-display text-3xl font-bold text-ink">{item.question}</h2>
-            <p className="mt-4 text-lg leading-relaxed text-muted">{item.answer}</p>
+            <h2 className="font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">{item.question}</h2>
+            <p className="mt-4 text-base leading-relaxed text-muted">{item.answer}</p>
           </section>
         ))}
       </div>

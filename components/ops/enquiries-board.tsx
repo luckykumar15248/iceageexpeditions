@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useEffectEvent, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { updateEnquiryAction } from "@/app/(ops)/ops/cms-actions"
 import { ENQUIRY_STATUSES, STATUS_LABEL, statusBadgeClass } from "@/lib/enquiry-labels"
 import { enquiryQuery, type DeskLead, type EnquiryFilters } from "@/lib/enquiry-filters"
 
-const field = "min-h-14 w-full rounded-md border border-line bg-paper px-4 text-lg text-ink"
+const field = "min-h-11 w-full rounded-md border border-line bg-paper px-4 text-base text-ink"
 
 export function EnquiriesBoard({
   filters,
@@ -29,26 +29,25 @@ export function EnquiriesBoard({
 }) {
   const router = useRouter()
   const [q, setQ] = useState(filters.q)
+  const [syncedQ, setSyncedQ] = useState(filters.q)
+  if (syncedQ !== filters.q) {
+    setSyncedQ(filters.q)
+    setQ(filters.q)
+  }
   const exportQuery = enquiryQuery({ ...filters, page: 1, lead: undefined }).replace(/^\?/, "")
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1
   const to = Math.min(total, page * pageSize)
   const pages = Math.max(1, Math.ceil(total / pageSize))
 
-  const filtersRef = useRef(filters)
-  filtersRef.current = filters
+  const pushSearch = useEffectEvent((term: string) => {
+    if (term === filters.q) return
+    router.push(`/ops/enquiries${enquiryQuery({ ...filters, q: term, page: 1, lead: undefined })}`)
+  })
 
   useEffect(() => {
-    setQ(filters.q)
-  }, [filters.q])
-
-  useEffect(() => {
-    const handle = window.setTimeout(() => {
-      const current = filtersRef.current
-      if (q.trim() === current.q) return
-      router.push(`/ops/enquiries${enquiryQuery({ ...current, q: q.trim(), page: 1, lead: undefined })}`)
-    }, 300)
+    const handle = window.setTimeout(() => pushSearch(q.trim()), 300)
     return () => window.clearTimeout(handle)
-  }, [q, router])
+  }, [q])
 
   function go(next: EnquiryFilters) {
     router.push(`/ops/enquiries${enquiryQuery(next)}`)
@@ -57,12 +56,12 @@ export function EnquiriesBoard({
   return (
     <div className="mt-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-lg text-muted">
+        <p className="text-base leading-relaxed text-muted">
           {total === 0 ? "No leads match these filters." : `Showing ${from}–${to} of ${total}`}
         </p>
         <a
           href={exportQuery ? `/ops/enquiries/export?${exportQuery}` : "/ops/enquiries/export"}
-          className="inline-flex min-h-14 items-center rounded-md bg-alpine px-6 text-lg font-semibold text-white hover:bg-alpine-deep"
+          className="inline-flex min-h-11 items-center rounded-md bg-alpine px-6 text-base font-medium text-white hover:bg-alpine-deep"
         >
           Export to Excel / CSV
         </a>
@@ -157,12 +156,12 @@ export function EnquiriesBoard({
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button type="submit" className="min-h-14 rounded-md border border-line px-6 text-lg font-semibold text-ink">
+          <button type="submit" className="min-h-11 rounded-md border border-line px-6 text-base font-medium text-ink">
             Apply filters
           </button>
           <button
             type="button"
-            className="min-h-14 text-lg font-semibold text-alpine-deep"
+            className="min-h-11 text-base font-medium text-alpine-deep"
             onClick={() => {
               setQ("")
               go({ q: "", page: 1 })
@@ -176,9 +175,9 @@ export function EnquiriesBoard({
       {rows.length === 0 ? null : (
         <>
           <div className="mt-6 hidden overflow-x-auto rounded-3xl border border-line bg-paper shadow-[0_12px_32px_rgba(26,29,27,0.07)] lg:block">
-            <table className="w-full min-w-[72rem] text-left text-lg">
+            <table className="w-full min-w-[72rem] text-left text-base">
               <thead>
-                <tr className="border-b border-line text-base uppercase tracking-wide text-muted">
+                <tr className="border-b border-line text-xs font-medium uppercase tracking-wide text-muted">
                   <th className="px-5 py-4 font-semibold">Traveler</th>
                   <th className="px-5 py-4 font-semibold">Phone / WhatsApp</th>
                   <th className="px-5 py-4 font-semibold">Route</th>
@@ -225,12 +224,12 @@ export function EnquiriesBoard({
                     <span className="font-display text-2xl font-bold text-ink">{row.name}</span>
                     <span className={statusBadgeClass(row.status)}>{row.statusLabel}</span>
                   </span>
-                  <span className="mt-3 block text-lg text-muted">{row.email}</span>
-                  <span className="mt-1 block text-lg text-ink">{row.phone}</span>
-                  <span className="mt-3 block text-lg text-ink">
+                  <span className="mt-3 block text-base leading-relaxed text-muted">{row.email}</span>
+                  <span className="mt-1 block text-base text-ink">{row.phone}</span>
+                  <span className="mt-3 block text-base text-ink">
                     {row.routeTitle} · {row.vehicleLabel}
                   </span>
-                  <span className="mt-1 block text-lg text-muted">
+                  <span className="mt-1 block text-base leading-relaxed text-muted">
                     Group {row.partyLabel} · {row.travelLabel}
                   </span>
                   <span className="mt-2 block text-base text-muted">{row.submittedLabel}</span>
@@ -243,13 +242,13 @@ export function EnquiriesBoard({
 
       {total > pageSize ? (
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-lg text-muted">
+          <p className="text-base leading-relaxed text-muted">
             Page {page} of {pages}
           </p>
           <div className="flex gap-3">
             <button
               type="button"
-              className="min-h-14 rounded-md border border-line px-5 text-lg font-semibold text-ink disabled:opacity-40"
+              className="min-h-11 rounded-md border border-line px-5 text-base font-medium text-ink disabled:opacity-40"
               disabled={page <= 1}
               onClick={() => go({ ...filters, page: page - 1, lead: undefined })}
             >
@@ -257,7 +256,7 @@ export function EnquiriesBoard({
             </button>
             <button
               type="button"
-              className="min-h-14 rounded-md border border-line px-5 text-lg font-semibold text-ink disabled:opacity-40"
+              className="min-h-11 rounded-md border border-line px-5 text-base font-medium text-ink disabled:opacity-40"
               disabled={page >= pages}
               onClick={() => go({ ...filters, page: page + 1, lead: undefined })}
             >
@@ -278,25 +277,26 @@ function LeadDrawer({ lead, canUpdate, onClose }: { lead: DeskLead; canUpdate: b
   const router = useRouter()
   const closeRef = useRef<HTMLButtonElement>(null)
   const [status, setStatus] = useState(lead.status)
+  const serverVersion = `${lead.id}:${lead.status}:${lead.notes.length}`
+  const [syncedVersion, setSyncedVersion] = useState(serverVersion)
+  if (syncedVersion !== serverVersion) {
+    setSyncedVersion(serverVersion)
+    setStatus(lead.status)
+  }
   const [note, setNote] = useState("")
   const [message, setMessage] = useState("")
   const [ok, setOk] = useState(false)
   const [pending, setPending] = useState(false)
 
-  const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
+  const closeOnEscape = useEffectEvent(() => onClose())
   useEffect(() => {
     closeRef.current?.focus()
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCloseRef.current()
+      if (event.key === "Escape") closeOnEscape()
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [lead.id])
-
-  useEffect(() => {
-    setStatus(lead.status)
-  }, [lead.id, lead.status, lead.notes.length])
 
   async function save() {
     setPending(true)
@@ -331,16 +331,16 @@ function LeadDrawer({ lead, canUpdate, onClose }: { lead: DeskLead; canUpdate: b
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-base font-semibold tracking-[0.14em] text-alpine uppercase">{lead.kindLabel}</p>
-            <h2 id="lead-drawer-title" className="mt-2 font-display text-4xl font-bold text-ink">
+            <p className="text-sm font-semibold tracking-wide text-alpine uppercase">{lead.kindLabel}</p>
+            <h2 id="lead-drawer-title" className="mt-2 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
               {lead.name}
             </h2>
           </div>
-          <button ref={closeRef} type="button" className="min-h-12 text-lg font-semibold text-alpine-deep" onClick={onClose}>
+          <button ref={closeRef} type="button" className="min-h-12 text-base font-medium text-alpine-deep" onClick={onClose}>
             Close
           </button>
         </div>
-        <dl className="mt-6 grid gap-4 text-lg">
+        <dl className="mt-6 grid gap-4 text-base">
           <Detail label="Email" value={lead.email} />
           <Detail label="Phone / WhatsApp" value={lead.phone} />
           <Detail label="Route" value={lead.routeTitle} />
@@ -349,17 +349,17 @@ function LeadDrawer({ lead, canUpdate, onClose }: { lead: DeskLead; canUpdate: b
           <Detail label="Travel date" value={lead.travelLabel} />
           <Detail label="Submitted" value={lead.submittedLabel} />
         </dl>
-        <p className="mt-6 whitespace-pre-wrap text-lg text-ink">{lead.message || "No message was stored."}</p>
+        <p className="mt-6 whitespace-pre-wrap text-base text-ink">{lead.message || "No message was stored."}</p>
 
         <h3 className="mt-8 font-display text-2xl font-bold text-ink">Internal notes</h3>
         {lead.notes.length === 0 && !lead.legacyNote ? (
-          <p className="mt-3 text-lg text-muted">No desk notes yet.</p>
+          <p className="mt-3 text-base leading-relaxed text-muted">No desk notes yet.</p>
         ) : (
           <ol className="mt-4 grid gap-3">
             {lead.legacyNote ? (
               <li className="rounded-2xl border border-line bg-canvas px-4 py-3">
                 <p className="text-base font-semibold text-muted">Earlier note</p>
-                <p className="mt-1 whitespace-pre-wrap text-lg text-ink">{lead.legacyNote}</p>
+                <p className="mt-1 whitespace-pre-wrap text-base text-ink">{lead.legacyNote}</p>
               </li>
             ) : null}
             {lead.notes.map((item) => (
@@ -367,7 +367,7 @@ function LeadDrawer({ lead, canUpdate, onClose }: { lead: DeskLead; canUpdate: b
                 <p className="text-base font-semibold text-muted">
                   {item.authorName} · {item.atLabel}
                 </p>
-                <p className="mt-1 whitespace-pre-wrap text-lg text-ink">{item.body}</p>
+                <p className="mt-1 whitespace-pre-wrap text-base text-ink">{item.body}</p>
               </li>
             ))}
           </ol>
@@ -389,18 +389,18 @@ function LeadDrawer({ lead, canUpdate, onClose }: { lead: DeskLead; canUpdate: b
               Add a note
               <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={4} className={`${field} min-h-32 py-3`} />
             </label>
-            {message ? <p className={`text-lg ${ok ? "text-alpine-deep" : "text-danger"}`}>{message}</p> : null}
+            {message ? <p className={`text-base ${ok ? "text-alpine-deep" : "text-danger"}`}>{message}</p> : null}
             <button
               type="button"
               disabled={pending}
-              className="min-h-14 rounded-md bg-alpine px-6 text-lg font-semibold text-white hover:bg-alpine-deep disabled:opacity-60"
+              className="min-h-11 rounded-md bg-alpine px-6 text-base font-medium text-white hover:bg-alpine-deep disabled:opacity-60"
               onClick={() => void save()}
             >
               {pending ? "Saving…" : "Save lead"}
             </button>
           </div>
         ) : (
-          <p className="mt-6 text-lg text-muted">This desk role can read the lead. Status and notes need an ops admin or expedition lead.</p>
+          <p className="mt-6 text-base leading-relaxed text-muted">This desk role can read the lead. Status and notes need an ops admin or expedition lead.</p>
         )}
       </aside>
     </div>
@@ -411,7 +411,7 @@ function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-base font-semibold text-muted">{label}</dt>
-      <dd className="text-lg text-ink">{value}</dd>
+      <dd className="text-base text-ink">{value}</dd>
     </div>
   )
 }

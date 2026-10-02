@@ -12,18 +12,18 @@ export function DepartureBoard({
   if (departures.length === 0) {
     return (
       <section id="departures" className="scroll-mt-36">
-        <h2 className="font-display text-4xl font-bold text-ink sm:text-5xl">Dated departures</h2>
-        <p className="mt-4 text-lg text-muted">No dated departure is published for this route yet. Use the quote form below.</p>
+        <h2 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">Dated departures</h2>
+        <p className="mt-4 text-base leading-relaxed text-muted">No dated departure is published for this route yet. Use the quote form below.</p>
       </section>
     )
   }
 
   return (
     <section id="departures" aria-labelledby="departures-heading" className="scroll-mt-40">
-      <h2 id="departures-heading" className="font-display text-4xl font-bold text-ink sm:text-5xl">
+      <h2 id="departures-heading" className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
         Dated departures
       </h2>
-      <p className="mt-4 max-w-3xl text-lg text-muted">
+      <p className="mt-4 max-w-3xl text-base leading-relaxed text-muted">
         Prices are per {vehicleLabel === "Motorbike" ? "rider slot" : "SUV seat"}, shown in INR. A full batch stays on
         the list and cannot be requested.
       </p>
@@ -33,7 +33,7 @@ export function DepartureBoard({
         ))}
       </div>
       <div className="mt-8 hidden overflow-hidden rounded-3xl border border-line bg-paper shadow-[0_12px_32px_rgba(26,29,27,0.07)] md:block">
-        <table className="w-full border-collapse text-left text-lg">
+        <table className="w-full border-collapse text-left text-base">
           <caption className="sr-only">Departure dates, remaining places, and prices</caption>
           <thead className="bg-canvas text-muted">
             <tr>
@@ -69,7 +69,7 @@ export function DepartureBoard({
         </table>
       </div>
       {open.length === 0 ? (
-        <p className="mt-5 text-lg text-muted">No batch is open for a new request. Use the enquiry form below.</p>
+        <p className="mt-5 text-base leading-relaxed text-muted">No batch is open for a new request. Use the enquiry form below.</p>
       ) : null}
     </section>
   )
@@ -84,9 +84,9 @@ function DepartureCard({ departure }: { departure: DepartureRow }) {
         </p>
         <StatusBadge departure={departure} />
       </div>
-      <p className="mt-3 text-lg text-muted">{departure.meetingPoint}</p>
-      <p className="mt-4 text-lg font-semibold text-ink">{departure.inventoryLabel}</p>
-      <p className="text-lg text-ink">
+      <p className="mt-3 text-base leading-relaxed text-muted">{departure.meetingPoint}</p>
+      <p className="mt-4 text-base font-medium text-ink">{departure.inventoryLabel}</p>
+      <p className="text-base text-ink">
         {departure.priceLabel} <span className="text-muted">· deposit {departure.depositLabel}</span>
       </p>
       <div className="mt-4">
@@ -125,7 +125,7 @@ function DepartureAction({ departure }: { departure: DepartureRow }) {
     return (
       <Link
         href={`/booking/${departure.id}`}
-        className="inline-flex min-h-14 items-center rounded-md bg-alpine px-5 text-lg font-semibold text-white hover:bg-alpine-deep"
+        className="inline-flex min-h-11 items-center rounded-md bg-alpine px-5 text-base font-medium text-white hover:bg-alpine-deep"
       >
         Request to book
       </Link>
@@ -135,7 +135,7 @@ function DepartureAction({ departure }: { departure: DepartureRow }) {
     return (
       <a
         href="#enquire"
-        className="inline-flex min-h-14 items-center rounded-md border border-alpine px-5 text-lg font-semibold text-alpine-deep"
+        className="inline-flex min-h-11 items-center rounded-md border border-alpine px-5 text-base font-medium text-alpine-deep"
       >
         Request a quote
       </a>

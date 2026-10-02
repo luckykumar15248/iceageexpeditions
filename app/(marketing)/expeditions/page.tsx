@@ -26,22 +26,22 @@ export default async function ExpeditionsPage({ searchParams }: PageProps<"/expe
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
-      <p className="text-base font-semibold tracking-[0.14em] text-alpine uppercase">The route book</p>
-      <h1 className="mt-3 font-display text-5xl font-bold text-ink sm:text-7xl">Expeditions</h1>
-      <p className="mt-5 max-w-3xl text-xl text-muted">
+      <p className="text-sm font-semibold tracking-wide text-alpine uppercase">The route book</p>
+      <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">Expeditions</h1>
+      <p className="mt-5 max-w-3xl text-base leading-relaxed text-muted">
         Filter by vehicle, difficulty, region, and season. Open and limited-slot badges use the seats still left on the
         next departure. A sold-out batch stays on the card and cannot be requested.
       </p>
       <div className="mt-12 grid gap-10 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start">
         <aside aria-label="Filter expeditions">
-          <h2 className="mb-4 font-display text-3xl font-bold text-ink">Filter trips</h2>
+          <h2 className="mb-4 font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">Filter trips</h2>
           <CatalogFilters filters={filters} regions={catalog.regions} seasons={catalog.seasons} />
         </aside>
         {catalog.status === "offline" ? (
           <OfflineNote />
         ) : catalog.expeditions.length === 0 ? (
           <div className="grid gap-8">
-            <p className="text-xl text-muted">
+            <p className="text-base leading-relaxed text-muted">
               Nothing published matches these filters.{" "}
               <Link href="/expeditions" className="font-medium text-alpine-deep underline">
                 Clear filters

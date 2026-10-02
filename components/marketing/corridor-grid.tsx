@@ -56,11 +56,11 @@ export function CorridorGrid({ expeditions }: { expeditions: ExpeditionCard[] })
                   </>
                 )}
               </div>
-              <h3 className="font-display text-3xl font-bold leading-tight text-ink">{corridor.title}</h3>
-              <p className="text-lg leading-relaxed text-muted">{corridor.body}</p>
+              <h3 className="font-display text-xl font-bold leading-tight tracking-tight text-ink sm:text-2xl">{corridor.title}</h3>
+              <p className="text-base leading-relaxed text-muted">{corridor.body}</p>
               <Link
                 href={href}
-                className="mt-auto inline-flex min-h-14 items-center gap-2 self-start rounded-md bg-alpine px-6 text-lg font-semibold text-white hover:bg-alpine-deep"
+                className="mt-auto inline-flex min-h-11 items-center gap-2 self-start rounded-md bg-alpine px-6 text-base font-medium text-white hover:bg-alpine-deep"
               >
                 Explore itinerary
                 <Arrow />

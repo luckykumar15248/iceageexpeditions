@@ -10,7 +10,7 @@ export function LoginForm() {
   return (
     <form action={action} className="mt-8 grid gap-5">
       {state.message ? (
-        <p className="rounded-2xl border border-danger/40 bg-paper px-4 py-3 text-lg text-danger" role="alert">
+        <p className="rounded-2xl border border-danger/40 bg-paper px-4 py-3 text-base text-danger" role="alert">
           {state.message}
         </p>
       ) : null}
@@ -22,7 +22,7 @@ export function LoginForm() {
           type="email"
           autoComplete="username"
           required
-          className="min-h-14 rounded-md border border-line bg-paper px-4 text-lg font-normal text-ink"
+          className="min-h-11 rounded-md border border-line bg-paper px-4 text-base font-normal text-ink"
         />
       </label>
       <label className="flex flex-col gap-2 text-base font-semibold text-ink" htmlFor="ops-password">
@@ -33,13 +33,13 @@ export function LoginForm() {
           type="password"
           autoComplete="current-password"
           required
-          className="min-h-14 rounded-md border border-line bg-paper px-4 text-lg font-normal text-ink"
+          className="min-h-11 rounded-md border border-line bg-paper px-4 text-base font-normal text-ink"
         />
       </label>
       <button
         type="submit"
         disabled={pending}
-        className="min-h-14 rounded-md bg-alpine px-6 text-lg font-semibold text-white hover:bg-alpine-deep disabled:opacity-60"
+        className="min-h-11 rounded-md bg-alpine px-6 text-base font-medium text-white hover:bg-alpine-deep disabled:opacity-60"
       >
         {pending ? "Checking…" : "Sign in"}
       </button>

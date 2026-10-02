@@ -69,6 +69,11 @@ enum EnquiryStatus {
   QUOTED
 }
 
+enum MediaAssetType {
+  IMAGE
+  VIDEO
+}
+
 enum StaffRole {
   OPS_ADMIN
   EXPEDITION_LEAD
@@ -85,6 +90,14 @@ enum AuditAction {
   EXPEDITION_SAVED
   DEPARTURE_CREATED
   ENQUIRY_UPDATED
+  MEDIA_UPLOADED
+  MEDIA_DELETED
+  HERO_SLIDE_SAVED
+  HERO_SLIDE_DELETED
+  HERO_SLIDES_REORDERED
+  GALLERY_ITEM_ADDED
+  GALLERY_ITEM_DELETED
+  GALLERY_ITEMS_REORDERED
 }
 
 model Region {
@@ -306,20 +319,98 @@ model EnquiryNote {
 }
 
 model StaffUser {
-  id                String     @id @default(cuid())
-  email             String     @unique @db.VarChar(191)
-  name              String     @db.VarChar(160)
+  id                String       @id @default(cuid())
+  email             String       @unique @db.VarChar(191)
+  name              String       @db.VarChar(160)
   role              StaffRole
-  isActive          Boolean    @default(true)
+  isActive          Boolean      @default(true)
   /// scrypt hash. Null until an admin sets a password on the server. Never sent to the client.
-  passwordHash      String?    @db.VarChar(255)
+  passwordHash      String?      @db.VarChar(255)
   audits            AuditLog[]
-  cancelledBookings Booking[]     @relation("BookingCancelledBy")
+  cancelledBookings Booking[]    @relation("BookingCancelledBy")
   enquiryNotes      EnquiryNote[]
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  mediaAssets       MediaAsset[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
   @@index([role, isActive])
+}
+
+/// Central media library. Images and videos uploaded through the ops console.
+model MediaAsset {
+  id                String         @id @default(cuid())
+  /// Distinguishes image assets from video assets for filtering and rendering.
+  assetType         MediaAssetType @default(IMAGE)
+  /// Safe filename stored on disk under public/uploads/media/ (images) or public/uploads/videos/ (videos).
+  filename          String         @db.VarChar(255)
+  /// Original browser filename for display.
+  originalName      String         @db.VarChar(255)
+  /// Public URL path: /uploads/media/… for images, /uploads/videos/… for videos.
+  url               String         @db.VarChar(500)
+  mimeType          String         @db.VarChar(64)
+  sizeBytes         Int
+  /// Video length in whole seconds. Null for images.
+  durationSeconds   Int?
+  altText           String?        @db.VarChar(240)
+  uploadedByStaffId String
+  uploadedBy        StaffUser      @relation(fields: [uploadedByStaffId], references: [id], onDelete: Restrict)
+  heroSlides        HeroSlide[]
+  galleryItems      GalleryItem[]
+  createdAt         DateTime       @default(now())
+
+  @@index([uploadedByStaffId])
+  @@index([assetType, createdAt])
+  @@index([createdAt])
+}
+
+/// Dynamic hero slider slides for the public homepage.
+model HeroSlide {
+  id             String      @id @default(cuid())
+  /// Lower numbers appear first.
+  sortOrder      Int         @default(0)
+  active         Boolean     @default(true)
+  /// Short uppercase eyebrow shown above the title.
+  kicker         String      @db.VarChar(120)
+  title          String      @db.VarChar(180)
+  body           String      @db.Text
+  /// Label for the primary CTA button.
+  primaryLabel   String      @db.VarChar(80)
+  primaryHref    String      @db.VarChar(500)
+  /// Optional secondary CTA button.
+  secondaryLabel String?     @db.VarChar(80)
+  secondaryHref  String?     @db.VarChar(500)
+  /// Slide background image URL — used as poster/fallback when a video is also set.
+  imageUrl       String      @db.VarChar(500)
+  imageAlt       String      @db.VarChar(240)
+  /// Optional background video URL. When set the slide renders a muted autoplay loop.
+  videoUrl       String?     @db.VarChar(500)
+  /// If the background media came from the media library, link it so deleting warns.
+  mediaAssetId   String?
+  mediaAsset     MediaAsset? @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([active, sortOrder])
+}
+
+/// Public-facing media gallery. Each item links one MediaAsset (image or video).
+model GalleryItem {
+  id           String     @id @default(cuid())
+  /// Lower numbers appear first.
+  sortOrder    Int        @default(0)
+  active       Boolean    @default(true)
+  /// Optional caption shown on hover and in the lightbox.
+  caption      String?    @db.VarChar(300)
+  /// Optional grouping filter on the public gallery (e.g. Ladakh, Spiti).
+  category     String?    @db.VarChar(80)
+  /// One library asset can appear in the public gallery once — pick from the library, do not re-upload.
+  mediaAssetId String     @unique
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([active, sortOrder])
+  @@index([category])
 }
 
 model AuditLog {

@@ -127,7 +127,7 @@ export default async function ExpeditionPage({ params }: PageProps<"/expeditions
         </div>
         <div className="relative z-10 mx-auto -mt-16 w-full max-w-7xl px-4 sm:px-6">
           <div className="rounded-3xl border border-line bg-paper px-6 py-8 shadow-[0_18px_50px_rgba(26,29,27,0.08)] sm:px-10 sm:py-12">
-            <nav aria-label="Breadcrumb" className="text-lg text-muted">
+            <nav aria-label="Breadcrumb" className="text-base leading-relaxed text-muted">
               <Link href="/" className="font-semibold text-alpine-deep hover:underline">
                 Home
               </Link>
@@ -138,13 +138,13 @@ export default async function ExpeditionPage({ params }: PageProps<"/expeditions
               <span aria-hidden="true"> / </span>
               <span className="text-ink">{expedition.title}</span>
             </nav>
-            <p className="mt-5 text-base font-semibold tracking-[0.14em] text-alpine uppercase">
+            <p className="mt-5 text-sm font-semibold tracking-wide text-alpine uppercase">
               {expedition.vehicleLabel} · {expedition.regionName} · {expedition.seasonLabel}
             </p>
-            <h1 className="mt-3 max-w-4xl font-display text-5xl leading-tight font-bold text-ink sm:text-7xl">
+            <h1 className="mt-3 max-w-4xl font-display text-4xl leading-tight font-bold tracking-tight text-ink sm:text-5xl">
               {expedition.title}
             </h1>
-            <p className="mt-5 max-w-3xl text-xl leading-relaxed text-muted">{expedition.summary}</p>
+            <p className="mt-5 max-w-3xl text-base leading-relaxed text-muted">{expedition.summary}</p>
           </div>
         </div>
       </header>
@@ -163,7 +163,7 @@ export default async function ExpeditionPage({ params }: PageProps<"/expeditions
             <Stat label="Difficulty" value={expedition.difficultyLabel} />
             <Stat label="Vehicle" value={expedition.vehicleLabel} />
           </dl>
-          <p className="mt-5 text-lg text-muted">
+          <p className="mt-5 text-base leading-relaxed text-muted">
             Planned time rolling: {expedition.movingHoursLabel}. Road distance is not a single number. Washouts move the
             line.
           </p>
@@ -171,7 +171,7 @@ export default async function ExpeditionPage({ params }: PageProps<"/expeditions
 
         {expedition.gallery.length > 0 ? (
           <section className="mt-16" aria-labelledby="gallery-heading">
-            <h2 id="gallery-heading" className="font-display text-4xl font-bold text-ink sm:text-5xl">
+            <h2 id="gallery-heading" className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
               On the road
             </h2>
             <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -185,7 +185,7 @@ export default async function ExpeditionPage({ params }: PageProps<"/expeditions
         ) : null}
 
         <section className="mt-16 scroll-mt-40" id="itinerary" aria-labelledby="itinerary-heading">
-          <h2 id="itinerary-heading" className="font-display text-4xl font-bold text-ink sm:text-5xl">
+          <h2 id="itinerary-heading" className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
             Day by day
           </h2>
           <ItineraryTimeline days={expedition.days} />
@@ -196,7 +196,7 @@ export default async function ExpeditionPage({ params }: PageProps<"/expeditions
         </div>
 
         <section id="inclusions" className="mt-16 scroll-mt-40" aria-labelledby="inclusions-heading">
-          <h2 id="inclusions-heading" className="font-display text-4xl font-bold text-ink sm:text-5xl">
+          <h2 id="inclusions-heading" className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
             What the price covers
           </h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2">
@@ -206,24 +206,24 @@ export default async function ExpeditionPage({ params }: PageProps<"/expeditions
         </section>
 
         <section id="gear" className="mt-16 scroll-mt-40" aria-labelledby="gear-heading">
-          <h2 id="gear-heading" className="font-display text-4xl font-bold text-ink sm:text-5xl">
+          <h2 id="gear-heading" className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
             Gear for this {expedition.vehicleLabel.toLowerCase()} expedition
           </h2>
-          <ul className="mt-6 list-disc space-y-3 pl-6 text-lg text-muted">
+          <ul className="mt-6 list-disc space-y-3 pl-6 text-base leading-relaxed text-muted">
             {gear.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
-          <Link href="/gear" className="mt-6 inline-flex text-lg font-semibold text-alpine-deep underline">
+          <Link href="/gear" className="mt-6 inline-flex text-base font-medium text-alpine-deep underline">
             Open the full packing guide
           </Link>
         </section>
 
         <section id="permits" className="mt-16 scroll-mt-40 rounded-3xl border border-line bg-paper p-8 shadow-[0_12px_32px_rgba(26,29,27,0.07)]" aria-labelledby="permits-heading">
-          <h2 id="permits-heading" className="font-display text-4xl font-bold text-ink">
+          <h2 id="permits-heading" className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
             Safety and permits
           </h2>
-          <div className="mt-5 space-y-4 text-lg leading-relaxed text-muted">
+          <div className="mt-5 space-y-4 text-base leading-relaxed text-muted">
             <p>
               Inner Line and Protected Area permits depend on nationality, the route, and the current local order. Ops
               confirms the window for each departure. This page is not a legal opinion.
@@ -241,14 +241,14 @@ export default async function ExpeditionPage({ params }: PageProps<"/expeditions
             ) : null}
             {expedition.permitNotes ? <p>{expedition.permitNotes}</p> : null}
           </div>
-          <Link href="/safety" className="mt-6 inline-flex text-lg font-semibold text-alpine-deep underline">
+          <Link href="/safety" className="mt-6 inline-flex text-base font-medium text-alpine-deep underline">
             Read the safety notes
           </Link>
         </section>
 
         <div id="enquire" className="mt-14 scroll-mt-36">
           {bookable ? null : (
-            <p className="mb-4 text-lg text-ink">No departure is open. Send an enquiry or join a waitlist.</p>
+            <p className="mb-4 text-base text-ink">No departure is open. Send an enquiry or join a waitlist.</p>
           )}
           <EnquiryForm
             expeditionId={expedition.id}
@@ -266,11 +266,11 @@ export default async function ExpeditionPage({ params }: PageProps<"/expeditions
         <div className="flex items-center justify-between gap-3">
           <p className="font-display text-2xl font-bold text-ink">{expedition.fromPriceLabel ?? "Enquire"}</p>
           {bookable ? (
-            <Link href={`/booking/${bookable.id}`} className="inline-flex min-h-14 items-center rounded-md bg-alpine px-5 text-lg font-semibold text-white">
+            <Link href={`/booking/${bookable.id}`} className="inline-flex min-h-11 items-center rounded-md bg-alpine px-5 text-base font-medium text-white">
               Request to book
             </Link>
           ) : (
-            <a href="#enquire" className="inline-flex min-h-14 items-center rounded-md bg-alpine px-5 text-lg font-semibold text-white">
+            <a href="#enquire" className="inline-flex min-h-11 items-center rounded-md bg-alpine px-5 text-base font-medium text-white">
               Request a quote
             </a>
           )}
@@ -284,7 +284,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-base font-semibold tracking-[0.12em] text-alpine uppercase">{label}</dt>
-      <dd className="mt-2 font-display text-3xl font-bold text-ink">{value}</dd>
+      <dd className="mt-2 font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">{value}</dd>
     </div>
   );
 }
@@ -302,15 +302,15 @@ function ListBlock({
 }) {
   return (
     <section className={`rounded-3xl border p-8 shadow-[0_12px_32px_rgba(26,29,27,0.07)] ${tone === "alpine" ? "border-alpine/30 bg-alpine-soft" : "border-line bg-paper"}`}>
-      <h3 className="font-display text-3xl font-bold text-ink">{title}</h3>
+      <h3 className="font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">{title}</h3>
       {items.length > 0 ? (
-        <ul className="mt-5 list-disc space-y-3 pl-6 text-lg text-ink">
+        <ul className="mt-5 list-disc space-y-3 pl-6 text-base text-ink">
           {items.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
       ) : (
-        <p className="mt-5 text-lg whitespace-pre-line text-ink">{fallback}</p>
+        <p className="mt-5 text-base whitespace-pre-line text-ink">{fallback}</p>
       )}
     </section>
   );

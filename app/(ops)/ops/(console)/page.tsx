@@ -30,18 +30,18 @@ export default async function OpsHomePage() {
           </dl>
           <section className="mt-10 rounded-3xl border border-line bg-paper p-6 shadow-[0_12px_32px_rgba(26,29,27,0.07)] sm:p-8">
             <div className="flex flex-wrap items-end justify-between gap-4">
-              <h2 className="font-display text-3xl font-bold text-ink">Recent leads</h2>
-              <Link href="/ops/enquiries" className="text-lg font-semibold text-alpine-deep hover:underline">
+              <h2 className="font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">Recent leads</h2>
+              <Link href="/ops/enquiries" className="text-base font-medium text-alpine-deep hover:underline">
                 All enquiries
               </Link>
             </div>
             {snapshot.data.leads.length === 0 ? (
-              <p className="mt-4 text-lg text-muted">No open enquiries are on file.</p>
+              <p className="mt-4 text-base leading-relaxed text-muted">No open enquiries are on file.</p>
             ) : (
               <div className="mt-6 overflow-x-auto">
-                <table className="w-full min-w-[36rem] text-left text-lg">
+                <table className="w-full min-w-[36rem] text-left text-base">
                   <thead>
-                    <tr className="border-b border-line text-base uppercase tracking-wide text-muted">
+                    <tr className="border-b border-line text-xs font-medium uppercase tracking-wide text-muted">
                       <th className="py-3 pr-4 font-semibold">Name</th>
                       <th className="py-3 pr-4 font-semibold">Kind</th>
                       <th className="py-3 font-semibold">Received</th>
@@ -70,8 +70,8 @@ function Stat({ label, value, href }: { label: string; value: number; href: stri
   return (
     <div className="rounded-3xl border border-line bg-paper p-6 shadow-[0_12px_32px_rgba(26,29,27,0.07)]">
       <dt className="text-base font-semibold tracking-[0.12em] text-alpine uppercase">{label}</dt>
-      <dd className="mt-3 font-display text-5xl font-bold text-ink">{value}</dd>
-      <Link href={href} className="mt-3 inline-flex text-lg font-semibold text-alpine-deep hover:underline">
+      <dd className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">{value}</dd>
+      <Link href={href} className="mt-3 inline-flex text-base font-medium text-alpine-deep hover:underline">
         Open
       </Link>
     </div>

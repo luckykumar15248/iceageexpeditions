@@ -8,6 +8,7 @@ const links = [
   { href: "/expeditions?vehicle=SUV_4X4", label: "4x4 SUV", match: "SUV_4X4" },
   { href: "/expeditions?vehicle=MOTORBIKE", label: "Motorbike", match: "MOTORBIKE" },
   { href: "/safety", label: "Safety", match: "" },
+  { href: "/gallery", label: "Gallery", match: "" },
   { href: "/gear", label: "Gear", match: "" },
   { href: "/faq", label: "FAQ", match: "" },
   { href: "/contact", label: "Contact", match: "" },
@@ -69,7 +70,7 @@ export function SiteHeader() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="flex min-h-12 items-center text-lg text-ink"
+                  className="flex min-h-12 items-center text-base text-ink"
                   onClick={() => setOpen(false)}
                 >
                   {link.label}

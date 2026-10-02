@@ -41,27 +41,27 @@ export default async function EditExpeditionPage({
         body={`${record.status} · ${record.regionName} · ${record.slug}. Basics, itinerary, departures, and search each have their own step.`}
       />
       <p className="mt-6">
-        <Link href="/ops/expeditions" className="text-lg font-semibold text-alpine-deep underline-offset-4 hover:underline">
+        <Link href="/ops/expeditions" className="text-base font-medium text-alpine-deep underline-offset-4 hover:underline">
           Back to expeditions
         </Link>
       </p>
-      {notice ? <p className="mt-6 rounded-2xl border border-line bg-alpine-soft px-4 py-3 text-lg text-ink">{notice}</p> : null}
+      {notice ? <p className="mt-6 rounded-2xl border border-line bg-alpine-soft px-4 py-3 text-base text-ink">{notice}</p> : null}
       {canWrite ? (
         <ExpeditionEditor expedition={record} />
       ) : (
         <>
           <ReadOnlyExpedition expedition={record} />
           <section className="mt-12" aria-labelledby="batches-heading">
-            <h2 id="batches-heading" className="font-display text-3xl font-bold text-ink">
+            <h2 id="batches-heading" className="font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">
               Departures
             </h2>
             {record.departures.length === 0 ? (
-              <p className="mt-4 text-lg text-muted">No dated batches are stored for this route.</p>
+              <p className="mt-4 text-base leading-relaxed text-muted">No dated batches are stored for this route.</p>
             ) : (
               <div className="mt-6 overflow-x-auto rounded-3xl border border-line bg-paper">
-                <table className="w-full min-w-[48rem] text-left text-lg">
+                <table className="w-full min-w-[48rem] text-left text-base">
                   <thead>
-                    <tr className="border-b border-line text-base uppercase tracking-wide text-muted">
+                    <tr className="border-b border-line text-xs font-medium uppercase tracking-wide text-muted">
                       <th className="px-6 py-4 font-semibold">Dates</th>
                       <th className="px-6 py-4 font-semibold">Meeting point</th>
                       <th className="px-6 py-4 font-semibold">Open</th>
@@ -111,14 +111,14 @@ function ReadOnlyExpedition({
 }) {
   return (
     <section className="mt-10 rounded-3xl border border-line bg-paper p-8">
-      <p className="text-lg text-muted">This desk role can read the route. Changing it needs an ops admin or expedition lead.</p>
-      <p className="mt-6 text-lg text-ink">{expedition.summary}</p>
-      <p className="mt-4 text-lg text-ink">
+      <p className="text-base leading-relaxed text-muted">This desk role can read the route. Changing it needs an ops admin or expedition lead.</p>
+      <p className="mt-6 text-base text-ink">{expedition.summary}</p>
+      <p className="mt-4 text-base text-ink">
         {expedition.durationDays} days · {expedition.maxAltitudeMeters} m · {expedition.difficulty} · {expedition.seasonLabel}
       </p>
       <ul className="mt-6 grid gap-3">
         {expedition.days.map((day) => (
-          <li key={day.dayNumber} className="text-lg text-ink">
+          <li key={day.dayNumber} className="text-base text-ink">
             Day {day.dayNumber}: {day.title} · sleep {day.sleepStop}
           </li>
         ))}

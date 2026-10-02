@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useRef, useState, type ReactNode } from "react"
+import { useEffect, useEffectEvent, useId, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { saveExpeditionWizard, uploadOpsImage } from "@/app/(ops)/ops/cms-actions"
 import { formatInr } from "@/lib/format"
@@ -9,12 +9,12 @@ import {
   WIZARD_STEPS,
   errorsForStep,
   firstInvalidStep,
+  normalizeDraft,
   slugifyTitle,
   stepOfField,
   validateDraft,
   type DraftDay,
   type DraftDeparture,
-  type DraftImage,
   type DraftListItem,
   type ExpeditionDraft,
   type FieldErrors,
@@ -64,7 +64,7 @@ type EditorExpedition = {
   departures: SavedDeparture[]
 }
 
-const fieldClass = "min-h-14 w-full rounded-md border border-line bg-paper px-4 text-lg font-normal text-ink"
+const fieldClass = "min-h-11 w-full rounded-md border border-line bg-paper px-4 text-base font-normal text-ink"
 const cardClass = "rounded-3xl border border-line bg-paper p-6 shadow-[0_12px_32px_rgba(26,29,27,0.07)] sm:p-8"
 
 export function ExpeditionEditor({ expedition }: { expedition: EditorExpedition | null }) {
@@ -81,6 +81,7 @@ export function ExpeditionEditor({ expedition }: { expedition: EditorExpedition 
   const [banner, setBanner] = useState("")
   const [bannerOk, setBannerOk] = useState(false)
   const [restored, setRestored] = useState(false)
+  const [stash, setStash] = useState<{ draft: ExpeditionDraft; step: number } | null>(null)
   const [hydrated, setHydrated] = useState(false)
   const [pending, setPending] = useState(false)
   const [published, setPublished] = useState(expedition?.status === "PUBLISHED")
@@ -94,11 +95,16 @@ export function ExpeditionEditor({ expedition }: { expedition: EditorExpedition 
       const raw = sessionStorage.getItem(storageKey(initialId.current))
       if (raw) {
         const parsed: unknown = JSON.parse(raw)
-        if (isStoredDraft(parsed) && (!initialId.current || parsed.draft.id === initialId.current)) {
-          setDraft(parsed.draft)
-          setStep(Math.min(WIZARD_STEPS.length - 1, parsed.step))
-          slugTouched.current = parsed.draft.slug.trim().length > 0
-          setRestored(true)
+        if (isStoredDraft(parsed)) {
+          const restoredDraft = normalizeDraft(parsed.draft)
+          if (!initialId.current) {
+            setDraft(restoredDraft)
+            setStep(Math.min(WIZARD_STEPS.length - 1, parsed.step))
+            slugTouched.current = restoredDraft.slug.trim().length > 0
+            setRestored(true)
+          } else if (!restoredDraft.id || restoredDraft.id === initialId.current) {
+            setStash({ draft: { ...restoredDraft, id: initialId.current }, step: parsed.step })
+          }
         }
       }
     } catch {
@@ -203,7 +209,7 @@ export function ExpeditionEditor({ expedition }: { expedition: EditorExpedition 
     setPending(true)
     setConfirming(null)
     try {
-      const result = await saveExpeditionWizard(draft, intent)
+      const result = await saveExpeditionWizard(normalizeDraft(draft), intent)
       setFieldErrors(result.fieldErrors)
       if (!result.ok) {
         setBannerOk(false)
@@ -255,6 +261,7 @@ export function ExpeditionEditor({ expedition }: { expedition: EditorExpedition 
   return (
     <form
       className="mt-8"
+      aria-busy={pending}
       onSubmit={(event) => {
         event.preventDefault()
         if (step < WIZARD_STEPS.length - 1) goNext()
@@ -274,14 +281,14 @@ export function ExpeditionEditor({ expedition }: { expedition: EditorExpedition 
                 } ${stepHasError(index) ? "border-danger" : ""}`}
               >
                 <span
-                  className={`grid size-10 shrink-0 place-items-center rounded-full text-lg font-semibold ${
+                  className={`grid size-10 shrink-0 place-items-center rounded-full text-base font-medium ${
                     current || index < step ? "bg-alpine text-white" : "bg-canvas text-ink"
                   }`}
                 >
                   {index + 1}
                 </span>
                 <span>
-                  <span className="block text-lg font-semibold text-ink">{item.label}</span>
+                  <span className="block text-base font-medium text-ink">{item.label}</span>
                   <span className="block text-base text-muted">{item.hint}</span>
                 </span>
               </button>
@@ -290,18 +297,59 @@ export function ExpeditionEditor({ expedition }: { expedition: EditorExpedition 
         })}
       </ol>
 
-      <p className="mt-4 text-base font-semibold tracking-[0.14em] text-alpine uppercase">
+      <p className="mt-4 text-sm font-semibold tracking-wide text-alpine uppercase">
         Step {step + 1} of {WIZARD_STEPS.length}
         {" · "}
         {statusLabel}
       </p>
+      <div
+        className="mt-3 h-2 overflow-hidden rounded-full bg-line"
+        role="progressbar"
+        aria-valuemin={1}
+        aria-valuemax={WIZARD_STEPS.length}
+        aria-valuenow={step + 1}
+        aria-label={`Step ${step + 1} of ${WIZARD_STEPS.length}`}
+      >
+        <div className="h-full bg-alpine" style={{ width: `${((step + 1) / WIZARD_STEPS.length) * 100}%` }} />
+      </div>
+
+      {stash ? (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-paper px-4 py-3">
+          <p className="text-base text-ink">Unsaved edits from this browser are available. The saved route is still on this page.</p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              className="min-h-12 text-base font-medium text-alpine-deep"
+              onClick={() => {
+                setDraft(stash.draft)
+                setStep(Math.min(WIZARD_STEPS.length - 1, stash.step))
+                slugTouched.current = stash.draft.slug.trim().length > 0
+                setStash(null)
+                setRestored(true)
+              }}
+            >
+              Restore edits
+            </button>
+            <button
+              type="button"
+              className="min-h-12 text-base font-medium text-ink"
+              onClick={() => {
+                sessionStorage.removeItem(storageKey(initialId.current))
+                setStash(null)
+              }}
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {restored ? (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-alpine-soft px-4 py-3">
-          <p className="text-lg text-ink">Unsaved entries from this browser were restored.</p>
+          <p className="text-base text-ink">Unsaved entries from this browser were restored.</p>
           <button
             type="button"
-            className="min-h-12 text-lg font-semibold text-alpine-deep"
+            className="min-h-12 text-base font-medium text-alpine-deep"
             onClick={() => {
               setDraft(toDraft(expedition))
               setStep(0)
@@ -318,13 +366,13 @@ export function ExpeditionEditor({ expedition }: { expedition: EditorExpedition 
       ) : null}
 
       {banner ? (
-        <p className={`mt-4 rounded-2xl border px-4 py-3 text-lg ${bannerOk ? "border-line bg-alpine-soft text-ink" : "border-danger/40 bg-paper text-danger"}`} role={bannerOk ? "status" : "alert"}>
+        <p className={`mt-4 rounded-2xl border px-4 py-3 text-base ${bannerOk ? "border-line bg-alpine-soft text-ink" : "border-danger/40 bg-paper text-danger"}`} role={bannerOk ? "status" : "alert"}>
           {banner}
         </p>
       ) : null}
 
       <div className="mt-6">
-        <h2 ref={headingRef} tabIndex={-1} className="font-display text-4xl font-bold text-ink outline-none">
+        <h2 ref={headingRef} tabIndex={-1} className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl outline-none">
           {WIZARD_STEPS[step]?.label}
         </h2>
         {step === 0 ? (
@@ -385,14 +433,14 @@ export function ExpeditionEditor({ expedition }: { expedition: EditorExpedition 
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            className="min-h-14 rounded-md border border-line bg-paper px-6 text-lg font-semibold text-ink disabled:opacity-50"
+            className="min-h-11 rounded-md border border-line bg-paper px-6 text-base font-medium text-ink disabled:opacity-50"
             disabled={step === 0 || pending}
             onClick={() => setStep((current) => Math.max(0, current - 1))}
           >
             Previous
           </button>
           {step < WIZARD_STEPS.length - 1 ? (
-            <button type="submit" className="min-h-14 rounded-md border border-line bg-paper px-6 text-lg font-semibold text-ink" disabled={pending}>
+            <button type="submit" className="min-h-11 rounded-md border border-line bg-paper px-6 text-base font-medium text-ink" disabled={pending}>
               Next
             </button>
           ) : null}
@@ -401,7 +449,7 @@ export function ExpeditionEditor({ expedition }: { expedition: EditorExpedition 
           {published ? (
             <button
               type="button"
-              className="min-h-14 rounded-md border border-line bg-paper px-6 text-lg font-semibold text-ink"
+              className="min-h-11 rounded-md border border-line bg-paper px-6 text-base font-medium text-ink"
               disabled={pending}
               onClick={() => setConfirming("unpublish")}
             >
@@ -410,7 +458,7 @@ export function ExpeditionEditor({ expedition }: { expedition: EditorExpedition 
           ) : (
             <button
               type="button"
-              className="min-h-14 rounded-md bg-alpine px-6 text-lg font-semibold text-white hover:bg-alpine-deep disabled:opacity-60"
+              className="min-h-11 rounded-md bg-alpine px-6 text-base font-medium text-white hover:bg-alpine-deep disabled:opacity-60"
               disabled={pending}
               onClick={requestPublish}
             >
@@ -419,11 +467,19 @@ export function ExpeditionEditor({ expedition }: { expedition: EditorExpedition 
           )}
           <button
             type="button"
-            className="min-h-14 rounded-md border border-alpine bg-paper px-6 text-lg font-semibold text-alpine-deep disabled:opacity-60"
+            className="min-h-11 rounded-md border border-alpine bg-paper px-6 text-base font-medium text-alpine-deep disabled:opacity-60"
             disabled={pending}
             onClick={requestSave}
           >
-            {pending ? "Saving…" : published ? "Save changes" : "Save draft"}
+            {pending ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner /> Saving…
+              </span>
+            ) : published ? (
+              "Save changes"
+            ) : (
+              "Save draft"
+            )}
           </button>
         </div>
       </div>
@@ -556,7 +612,7 @@ function BasicsStep({
         <h3 className="font-display text-2xl font-bold text-ink">Gallery</h3>
         <button
           type="button"
-          className="min-h-12 rounded-md border border-line px-4 text-lg font-semibold text-ink"
+          className="min-h-12 rounded-md border border-line px-4 text-base font-medium text-ink"
           disabled={pending}
           onClick={() =>
             onChange({ gallery: [...draft.gallery, { key: rowKey("gallery"), url: "", alt: "" }] }, ["gallery"])
@@ -590,7 +646,7 @@ function BasicsStep({
           />
           <button
             type="button"
-            className="justify-self-start text-lg font-semibold text-danger"
+            className="justify-self-start text-base font-medium text-danger"
             onClick={() => onChange({ gallery: draft.gallery.filter((item) => item.key !== image.key) }, [`gallery.${image.key}.url`, `gallery.${image.key}.alt`])}
           >
             Remove image
@@ -616,10 +672,10 @@ function ItineraryStep({
     <div className="mt-6 grid gap-6">
       <section className={`${cardClass} grid gap-5`}>
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <p className="max-w-2xl text-lg text-muted">Each day needs a title, a narrative, a sleep stop, and the hours on the road. A blank day is left out of the save.</p>
+          <p className="max-w-2xl text-base leading-relaxed text-muted">Each day needs a title, a narrative, a sleep stop, and the hours on the road. Move a day to change its place. Day numbers follow that order. A blank day is left out of the save.</p>
           <button
             type="button"
-            className="min-h-12 rounded-md border border-line px-4 text-lg font-semibold text-ink"
+            className="min-h-12 rounded-md border border-line px-4 text-base font-medium text-ink"
             disabled={pending}
             onClick={() =>
               onChange(
@@ -632,9 +688,9 @@ function ItineraryStep({
           </button>
         </div>
         {errors.days ? <FieldError>{errors.days}</FieldError> : null}
-        {draft.days.map((day) => (
+        {draft.days.map((day, index) => (
           <fieldset key={day.key} className="grid gap-4 rounded-2xl border border-line p-5">
-            <legend className="px-2 text-lg font-semibold text-ink">Day {day.dayNumber || "—"}</legend>
+            <legend className="px-2 text-base font-medium text-ink">Day {day.dayNumber || "—"}</legend>
             <div className="grid gap-4 md:grid-cols-4">
               <TextField label="Day number" value={day.dayNumber} error={errors[`days.${day.key}.dayNumber`]} type="number" disabled={pending} onChange={(value) => patchDay(draft, day.key, { dayNumber: value }, onChange)} />
               <TextField label="Sleep altitude (m)" value={day.sleepAltitudeMeters} error={errors[`days.${day.key}.sleepAltitudeMeters`]} type="number" disabled={pending} onChange={(value) => patchDay(draft, day.key, { sleepAltitudeMeters: value }, onChange)} />
@@ -643,9 +699,22 @@ function ItineraryStep({
             </div>
             <TextField label="Title" value={day.title} error={errors[`days.${day.key}.title`]} disabled={pending} onChange={(value) => patchDay(draft, day.key, { title: value }, onChange)} />
             <AreaField label="Narrative" value={day.body} error={errors[`days.${day.key}.body`]} disabled={pending} onChange={(value) => patchDay(draft, day.key, { body: value }, onChange)} />
-            <button type="button" className="justify-self-start text-lg font-semibold text-danger" onClick={() => onChange({ days: draft.days.filter((item) => item.key !== day.key) }, [`days.${day.key}.title`])}>
-              Remove day
-            </button>
+            <div className="flex flex-wrap gap-4">
+              <button type="button" className="min-h-12 text-base font-medium text-ink disabled:opacity-40" disabled={pending || index === 0} onClick={() => moveDay(draft, day.key, -1, onChange)}>
+                Move up
+              </button>
+              <button
+                type="button"
+                className="min-h-12 text-base font-medium text-ink disabled:opacity-40"
+                disabled={pending || index === draft.days.length - 1}
+                onClick={() => moveDay(draft, day.key, 1, onChange)}
+              >
+                Move down
+              </button>
+              <button type="button" className="min-h-12 text-base font-medium text-danger" onClick={() => onChange({ days: draft.days.filter((item) => item.key !== day.key) }, [`days.${day.key}.title`])}>
+                Remove day
+              </button>
+            </div>
           </fieldset>
         ))}
       </section>
@@ -670,7 +739,7 @@ function ItineraryStep({
           disabled={pending}
           onChange={(value) => onChange({ permitNotes: value }, ["permitNotes"])}
         />
-        <label className="flex min-h-14 items-center gap-3 text-lg text-ink">
+        <label className="flex min-h-11 items-center gap-3 text-base text-ink">
           <input
             type="checkbox"
             className="size-5"
@@ -705,12 +774,12 @@ function DeparturesStep({
       <section className={cardClass}>
         <h3 className="font-display text-2xl font-bold text-ink">Saved batches</h3>
         {saved.length === 0 ? (
-          <p className="mt-4 text-lg text-muted">No dated batches are stored yet. New batches below are kept on this page until you save.</p>
+          <p className="mt-4 text-base leading-relaxed text-muted">No dated batches are stored yet. New batches below are kept on this page until you save.</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[44rem] text-left text-lg">
+            <table className="w-full min-w-[44rem] text-left text-base">
               <thead>
-                <tr className="border-b border-line text-base uppercase tracking-wide text-muted">
+                <tr className="border-b border-line text-xs font-medium uppercase tracking-wide text-muted">
                   <th className="py-3 pr-4 font-semibold">Dates</th>
                   <th className="py-3 pr-4 font-semibold">Meeting point</th>
                   <th className="py-3 pr-4 font-semibold">Open</th>
@@ -738,22 +807,22 @@ function DeparturesStep({
       </section>
       <section className={`${cardClass} grid gap-5`}>
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <p className="max-w-2xl text-lg text-muted">
+          <p className="max-w-2xl text-base leading-relaxed text-muted">
             {capacityLabel} for this vehicle class. A new batch starts with every place still open. Saving does not rewrite batches that are already stored.
           </p>
           <button
             type="button"
-            className="min-h-12 rounded-md border border-line px-4 text-lg font-semibold text-ink"
+            className="min-h-12 rounded-md border border-line px-4 text-base font-medium text-ink"
             disabled={pending}
             onClick={() => onChange([...draft.departures, blankDeparture()], [])}
           >
             Add batch
           </button>
         </div>
-        {draft.departures.length === 0 ? <p className="text-lg text-muted">No new batches yet.</p> : null}
+        {draft.departures.length === 0 ? <p className="text-base leading-relaxed text-muted">No new batches yet.</p> : null}
         {draft.departures.map((row) => (
           <fieldset key={row.key} className="grid gap-4 rounded-2xl border border-line p-5">
-            <legend className="px-2 text-lg font-semibold text-ink">New batch</legend>
+            <legend className="px-2 text-base font-medium text-ink">New batch</legend>
             <div className="grid gap-4 md:grid-cols-2">
               <TextField label="Start date" type="date" value={row.startDate} error={errors[`departures.${row.key}.startDate`]} disabled={pending} onChange={(value) => patchDeparture(draft, row.key, { startDate: value }, onChange)} />
               <TextField label="End date" type="date" value={row.endDate} error={errors[`departures.${row.key}.endDate`]} disabled={pending} onChange={(value) => patchDeparture(draft, row.key, { endDate: value }, onChange)} />
@@ -767,7 +836,7 @@ function DeparturesStep({
               </SelectField>
             </div>
             <AreaField label="Cancellation terms" value={row.policySnapshot} error={errors[`departures.${row.key}.policySnapshot`]} disabled={pending} onChange={(value) => patchDeparture(draft, row.key, { policySnapshot: value }, onChange)} />
-            <button type="button" className="justify-self-start text-lg font-semibold text-danger" onClick={() => onChange(draft.departures.filter((item) => item.key !== row.key), [`departures.${row.key}.startDate`])}>
+            <button type="button" className="justify-self-start text-base font-medium text-danger" onClick={() => onChange(draft.departures.filter((item) => item.key !== row.key), [`departures.${row.key}.startDate`])}>
               Remove batch
             </button>
           </fieldset>
@@ -818,11 +887,11 @@ function SeoStep({
           disabled={pending}
           onChange={(value) => onChange({ focusKeywords: value }, ["focusKeywords"])}
         />
-        <label className="flex min-h-14 items-center gap-3 text-lg text-ink">
+        <label className="flex min-h-11 items-center gap-3 text-base text-ink">
           <input type="checkbox" className="size-5" checked={draft.robotsIndex} disabled={pending} onChange={(event) => onChange({ robotsIndex: event.target.checked }, [])} />
           Allow search engines to index this route
         </label>
-        <label className="flex min-h-14 items-center gap-3 text-lg text-ink">
+        <label className="flex min-h-11 items-center gap-3 text-base text-ink">
           <input type="checkbox" className="size-5" checked={draft.robotsFollow} disabled={pending} onChange={(event) => onChange({ robotsFollow: event.target.checked }, [])} />
           Allow search engines to follow links on this route
         </label>
@@ -861,17 +930,17 @@ function Checklist({
         <h3 className="font-display text-2xl font-bold text-ink">{title}</h3>
         <button
           type="button"
-          className="min-h-12 rounded-md border border-line px-4 text-lg font-semibold text-ink"
+          className="min-h-12 rounded-md border border-line px-4 text-base font-medium text-ink"
           disabled={disabled}
           onClick={() => onChange([...items, { key: rowKey(title), text: "", included: true }])}
         >
           Add line
         </button>
       </div>
-      <p className="text-lg text-muted">Checked lines are saved on the route. An unchecked line stays here until you remove it.</p>
+      <p className="text-base leading-relaxed text-muted">Checked lines are saved on the route. An unchecked line stays here until you remove it.</p>
       {items.map((item) => (
         <div key={item.key} className="grid gap-3 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center">
-          <label className="flex min-h-14 items-center gap-3 text-lg text-ink">
+          <label className="flex min-h-11 items-center gap-3 text-base text-ink">
             <input
               type="checkbox"
               className="size-5"
@@ -889,7 +958,7 @@ function Checklist({
             className={fieldClass}
             onChange={(event) => onChange(items.map((row) => (row.key === item.key ? { ...row, text: event.target.value } : row)))}
           />
-          <button type="button" className="min-h-14 text-lg font-semibold text-danger" onClick={() => onChange(items.filter((row) => row.key !== item.key))}>
+          <button type="button" className="min-h-11 text-base font-medium text-danger" onClick={() => onChange(items.filter((row) => row.key !== item.key))}>
             Remove
           </button>
         </div>
@@ -905,10 +974,10 @@ function SearchPreview({ title, slug, description }: { title: string; slug: stri
       <h3 className="font-display text-2xl font-bold text-ink">Search preview</h3>
       <p className="mt-2 text-base text-muted">A shortened view of the title and description search results usually show.</p>
       <div className="mt-5 rounded-2xl border border-line bg-canvas p-5">
-        <p className="text-lg text-ink">{siteName}</p>
+        <p className="text-base text-ink">{siteName}</p>
         <p className="text-base text-alpine-deep">{host}/expeditions/{slug || "route-slug"}</p>
         <p className="mt-2 font-display text-2xl font-bold text-ink">{clip(title, 60)}</p>
-        <p className="mt-2 text-lg text-muted">{clip(description, 160)}</p>
+        <p className="mt-2 text-base leading-relaxed text-muted">{clip(description, 160)}</p>
       </div>
     </aside>
   )
@@ -964,7 +1033,7 @@ function ImageField({
         <p className="text-base font-semibold text-ink">{label}</p>
         <button
           type="button"
-          className="min-h-12 rounded-md border border-line px-4 text-lg font-semibold text-ink disabled:opacity-60"
+          className="min-h-12 rounded-md border border-line px-4 text-base font-medium text-ink disabled:opacity-60"
           disabled={disabled || uploading}
           onClick={() => inputRef.current?.click()}
         >
@@ -981,6 +1050,7 @@ function ImageField({
       {url ? (
         <div className="relative h-44 overflow-hidden rounded-2xl border border-line bg-canvas">
           {/* Ops previews local uploads and https files outside the image optimizer. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={url} alt={alt || `${label} preview`} className="h-full w-full object-cover" />
         </div>
       ) : null}
@@ -1006,12 +1076,11 @@ function ConfirmDialog({
   onConfirm: () => void
 }) {
   const cancelRef = useRef<HTMLButtonElement>(null)
-  const onCancelRef = useRef(onCancel)
-  onCancelRef.current = onCancel
+  const cancelOnEscape = useEffectEvent(() => onCancel())
   useEffect(() => {
     cancelRef.current?.focus()
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCancelRef.current()
+      if (event.key === "Escape") cancelOnEscape()
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
@@ -1026,16 +1095,22 @@ function ConfirmDialog({
         className="w-full max-w-xl rounded-3xl border border-line bg-paper p-8 shadow-[0_18px_50px_rgba(26,29,27,0.12)]"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <h2 id="expedition-confirm-title" className="font-display text-4xl font-bold text-ink">
+        <h2 id="expedition-confirm-title" className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
           {title}
         </h2>
-        <p className="mt-4 text-lg text-muted">{body}</p>
+        <p className="mt-4 text-base leading-relaxed text-muted">{body}</p>
         <div className="mt-8 flex flex-wrap justify-end gap-3">
-          <button ref={cancelRef} type="button" className="min-h-14 rounded-md border border-line px-6 text-lg font-semibold text-ink" onClick={onCancel}>
+          <button ref={cancelRef} type="button" className="min-h-11 rounded-md border border-line px-6 text-base font-medium text-ink" onClick={onCancel}>
             Keep editing
           </button>
-          <button type="button" className="min-h-14 rounded-md bg-alpine px-6 text-lg font-semibold text-white hover:bg-alpine-deep disabled:opacity-60" disabled={pending} onClick={onConfirm}>
-            {pending ? "Saving…" : confirmLabel}
+          <button type="button" className="min-h-11 rounded-md bg-alpine px-6 text-base font-medium text-white hover:bg-alpine-deep disabled:opacity-60" disabled={pending} onClick={onConfirm}>
+            {pending ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner /> Saving…
+              </span>
+            ) : (
+              confirmLabel
+            )}
           </button>
         </div>
       </div>
@@ -1165,6 +1240,29 @@ function patchDay(
     { days: draft.days.map((day) => (day.key === key ? { ...day, ...patch } : day)) },
     [`days.${key}.${field ?? "title"}`, "days"],
   )
+}
+
+function moveDay(
+  draft: ExpeditionDraft,
+  key: string,
+  direction: -1 | 1,
+  onChange: (patch: Partial<ExpeditionDraft>, keys: string[]) => void,
+) {
+  const index = draft.days.findIndex((day) => day.key === key)
+  const target = index + direction
+  if (index < 0 || target < 0 || target >= draft.days.length) return
+  const days = draft.days.slice()
+  const [row] = days.splice(index, 1)
+  if (!row) return
+  days.splice(target, 0, row)
+  onChange(
+    { days: days.map((day, position) => ({ ...day, dayNumber: String(position + 1) })) },
+    ["days"],
+  )
+}
+
+function Spinner() {
+  return <span className="inline-block size-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
 }
 
 function patchDeparture(

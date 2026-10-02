@@ -3,7 +3,7 @@ import { Difficulty, VehicleClass } from "@/app/generated/prisma/client"
 import { difficultyLabel } from "@/lib/format"
 import type { CatalogFilters } from "@/lib/catalog"
 
-const fieldClass = "min-h-14 rounded-md border border-line bg-paper px-4 text-lg text-ink"
+const fieldClass = "min-h-11 rounded-md border border-line bg-paper px-4 text-base text-ink"
 const difficulties = [Difficulty.MODERATE, Difficulty.CHALLENGING, Difficulty.STRENUOUS, Difficulty.EXTREME] as const
 
 export function CatalogFilters({
@@ -60,7 +60,7 @@ export function CatalogFilters({
       </label>
       <button
         type="submit"
-        className="min-h-14 rounded-md bg-alpine px-4 text-lg font-semibold text-white hover:bg-alpine-deep"
+        className="min-h-11 rounded-md bg-alpine px-4 text-base font-medium text-white hover:bg-alpine-deep"
       >
         Apply filters
       </button>

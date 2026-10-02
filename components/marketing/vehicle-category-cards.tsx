@@ -31,9 +31,9 @@ export function VehicleCategoryCards() {
             <ExpeditionImage src={category.image} alt={category.alt} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition duration-700 ease-out group-hover:scale-105" />
           </div>
           <div className="p-8">
-            <h2 className="font-display text-3xl font-bold text-ink group-hover:text-alpine">{category.title}</h2>
-            <p className="mt-3 text-lg leading-relaxed text-muted">{category.body}</p>
-            <span className="mt-5 inline-flex text-lg font-semibold text-alpine-deep">Browse this vehicle</span>
+            <h2 className="font-display text-xl font-bold tracking-tight text-ink sm:text-2xl group-hover:text-alpine">{category.title}</h2>
+            <p className="mt-3 text-base leading-relaxed text-muted">{category.body}</p>
+            <span className="mt-5 inline-flex text-base font-medium text-alpine-deep">Browse this vehicle</span>
           </div>
         </Link>
       ))}
