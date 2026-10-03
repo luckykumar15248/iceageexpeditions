@@ -8,6 +8,7 @@ import { ExpeditionSubnav } from "@/components/marketing/expedition-subnav";
 import { ItineraryTimeline } from "@/components/marketing/itinerary-timeline";
 import { JsonLd } from "@/components/marketing/json-ld";
 import { OfflineNote } from "@/components/marketing/offline-note";
+import { RouteVisualizer } from "@/components/marketing/route-visualizer";
 import { riderGear, suvGear } from "@/lib/content";
 import { getExpeditionDetail } from "@/lib/catalog";
 import { metaDescription } from "@/lib/format";
@@ -183,6 +184,18 @@ export default async function ExpeditionPage({ params }: PageProps<"/expeditions
             </ul>
           </section>
         ) : null}
+
+        <section className="mt-16 scroll-mt-40" id="route" aria-labelledby="route-heading">
+          <h2 id="route-heading" className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+            Route and altitude
+          </h2>
+          <RouteVisualizer
+            title={expedition.title}
+            points={expedition.routePoints}
+            days={expedition.days}
+            start={expedition.routeStart}
+          />
+        </section>
 
         <section className="mt-16 scroll-mt-40" id="itinerary" aria-labelledby="itinerary-heading">
           <h2 id="itinerary-heading" className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">

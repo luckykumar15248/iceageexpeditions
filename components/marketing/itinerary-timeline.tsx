@@ -19,6 +19,11 @@ export function ItineraryTimeline({ days }: { days: ItineraryStop[] }) {
                   Sleep at {day.sleepStop}, {day.sleepAltitudeMeters.toLocaleString("en-IN")} m · {day.movingHoursLabel}{" "}
                   rolling
                 </span>
+                {day.highPointName && day.highPointAltitudeMeters != null ? (
+                  <span className="mt-1 block text-base text-muted">
+                    High point: {day.highPointName}, {day.highPointAltitudeMeters.toLocaleString("en-IN")} m
+                  </span>
+                ) : null}
               </span>
               <span className="text-base font-semibold text-alpine group-open:hidden">Show</span>
               <span className="hidden text-base font-semibold text-alpine group-open:inline">Hide</span>

@@ -141,41 +141,46 @@ model CancellationPolicy {
 }
 
 model Expedition {
-  id                     String           @id @default(cuid())
-  regionId               String
-  slug                   String           @unique @db.VarChar(140)
-  title                  String           @db.VarChar(180)
-  vehicleClass           VehicleClass
-  durationDays           Int
-  maxAltitudeMeters      Int
-  difficulty             Difficulty
-  seasonLabel            String           @db.VarChar(120)
-  seasonStartMonth       Int?
-  seasonEndMonth         Int?
-  summary                String           @db.Text
-  inclusions             String           @db.Text
-  exclusions             String           @db.Text
-  permitNotes            String?          @db.Text
-  supportVehicleIncluded Boolean          @default(true)
-  heroImageUrl           String?          @db.VarChar(500)
-  heroImageAlt           String?          @db.VarChar(240)
-  metaTitle              String?          @db.VarChar(180)
-  metaDescription        String?          @db.VarChar(320)
-  focusKeywords          String?          @db.VarChar(255)
-  robotsIndex            Boolean          @default(true)
-  robotsFollow           Boolean          @default(true)
-  ogTitle                String?          @db.VarChar(180)
-  ogDescription          String?          @db.VarChar(320)
-  ogImageUrl             String?          @db.VarChar(500)
-  ogImageAlt             String?          @db.VarChar(240)
-  status                 ExpeditionStatus @default(DRAFT)
-  region                 Region           @relation(fields: [regionId], references: [id], onDelete: Restrict)
-  days                   ItineraryDay[]
-  gallery                ExpeditionImage[]
-  departures             Departure[]
-  enquiries              Enquiry[]
-  createdAt              DateTime         @default(now())
-  updatedAt              DateTime         @updatedAt
+  id                       String            @id @default(cuid())
+  regionId                 String
+  slug                     String            @unique @db.VarChar(140)
+  title                    String            @db.VarChar(180)
+  vehicleClass             VehicleClass
+  durationDays             Int
+  maxAltitudeMeters        Int
+  difficulty               Difficulty
+  seasonLabel              String            @db.VarChar(120)
+  seasonStartMonth         Int?
+  seasonEndMonth           Int?
+  summary                  String            @db.Text
+  inclusions               String            @db.Text
+  exclusions               String            @db.Text
+  permitNotes              String?           @db.Text
+  supportVehicleIncluded   Boolean           @default(true)
+  heroImageUrl             String?           @db.VarChar(500)
+  heroImageAlt             String?           @db.VarChar(240)
+  metaTitle                String?           @db.VarChar(180)
+  metaDescription          String?           @db.VarChar(320)
+  focusKeywords            String?           @db.VarChar(255)
+  robotsIndex              Boolean           @default(true)
+  robotsFollow             Boolean           @default(true)
+  ogTitle                  String?           @db.VarChar(180)
+  ogDescription            String?           @db.VarChar(320)
+  ogImageUrl               String?           @db.VarChar(500)
+  ogImageAlt               String?           @db.VarChar(240)
+  /// Optional trailhead for the route map. Null until ops plots the route.
+  routeStartName           String?           @db.VarChar(180)
+  routeStartLatitude       Decimal?          @db.Decimal(9, 6)
+  routeStartLongitude      Decimal?          @db.Decimal(9, 6)
+  routeStartAltitudeMeters Int?
+  status                   ExpeditionStatus  @default(DRAFT)
+  region                   Region            @relation(fields: [regionId], references: [id], onDelete: Restrict)
+  days                     ItineraryDay[]
+  gallery                  ExpeditionImage[]
+  departures               Departure[]
+  enquiries                Enquiry[]
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
 
   @@index([regionId, status])
   @@index([vehicleClass, status])
@@ -194,16 +199,22 @@ model ExpeditionImage {
 }
 
 model ItineraryDay {
-  id                  String     @id @default(cuid())
-  expeditionId        String
-  dayNumber           Int
-  title               String     @db.VarChar(180)
-  body                String     @db.Text
-  sleepStop           String     @db.VarChar(180)
-  sleepAltitudeMeters Int
+  id                      String     @id @default(cuid())
+  expeditionId            String
+  dayNumber               Int
+  title                   String     @db.VarChar(180)
+  body                    String     @db.Text
+  sleepStop               String     @db.VarChar(180)
+  sleepAltitudeMeters     Int
   /// Ride or drive time for the day. Stored as hours with one decimal place.
-  movingHours         Decimal    @db.Decimal(4, 1)
-  expedition          Expedition @relation(fields: [expeditionId], references: [id], onDelete: Cascade)
+  movingHours             Decimal    @db.Decimal(4, 1)
+  /// Sleep-stop coordinates for the route map. Both set or both null.
+  campLatitude            Decimal?   @db.Decimal(9, 6)
+  campLongitude           Decimal?   @db.Decimal(9, 6)
+  /// Highest pass or point crossed that day, for the altitude profile.
+  highPointName           String?    @db.VarChar(180)
+  highPointAltitudeMeters Int?
+  expedition              Expedition @relation(fields: [expeditionId], references: [id], onDelete: Cascade)
 
   @@unique([expeditionId, dayNumber])
   @@index([expeditionId])
@@ -333,26 +344,27 @@ model EnquiryNote {
   createdAt     DateTime  @default(now())
   enquiry       Enquiry   @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
   author        StaffUser @relation(fields: [authorStaffId], references: [id], onDelete: Restrict)
+
   @@index([enquiryId, createdAt])
   @@index([authorStaffId])
 }
 
 model StaffUser {
-  id                String       @id @default(cuid())
-  email             String       @unique @db.VarChar(191)
-  name              String       @db.VarChar(160)
+  id                String        @id @default(cuid())
+  email             String        @unique @db.VarChar(191)
+  name              String        @db.VarChar(160)
   role              StaffRole
-  isActive          Boolean      @default(true)
+  isActive          Boolean       @default(true)
   /// scrypt hash. Null until an admin sets a password on the server. Never sent to the client.
-  passwordHash      String?      @db.VarChar(255)
+  passwordHash      String?       @db.VarChar(255)
   audits            AuditLog[]
-  cancelledBookings Booking[]    @relation("BookingCancelledBy")
+  cancelledBookings Booking[]     @relation("BookingCancelledBy")
   enquiryNotes      EnquiryNote[]
   mediaAssets       MediaAsset[]
   blogPosts         BlogPost[]    @relation("BlogPostAuthor")
   moderatedComments BlogComment[] @relation("BlogCommentModerator")
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([role, isActive])
 }

@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation"
 import { saveExpeditionWizard, uploadOpsImage } from "@/app/(ops)/ops/cms-actions"
 import { formatInr } from "@/lib/format"
 import { getSiteUrl, siteName } from "@/lib/site"
+import { parseDegrees, splitCoordinatePair } from "@/lib/route-geo"
 import {
   WIZARD_STEPS,
+  dayHasRouteData,
   errorsForStep,
   firstInvalidStep,
   normalizeDraft,
@@ -59,7 +61,19 @@ type EditorExpedition = {
   ogDescription: string
   ogImageUrl: string
   ogImageAlt: string
-  days: { dayNumber: number; title: string; body: string; sleepStop: string; sleepAltitudeMeters: number; movingHours: number }[]
+  routeStart: { name: string | null; latitude: number | null; longitude: number | null; altitudeMeters: number | null }
+  days: {
+    dayNumber: number
+    title: string
+    body: string
+    sleepStop: string
+    sleepAltitudeMeters: number
+    movingHours: number
+    campLatitude: number | null
+    campLongitude: number | null
+    highPointName: string | null
+    highPointAltitudeMeters: number | null
+  }[]
   gallery: { url: string; alt: string }[]
   departures: SavedDeparture[]
 }
@@ -699,6 +713,7 @@ function ItineraryStep({
             </div>
             <TextField label="Title" value={day.title} error={errors[`days.${day.key}.title`]} disabled={pending} onChange={(value) => patchDay(draft, day.key, { title: value }, onChange)} />
             <AreaField label="Narrative" value={day.body} error={errors[`days.${day.key}.body`]} disabled={pending} onChange={(value) => patchDay(draft, day.key, { body: value }, onChange)} />
+            <DayRouteFields day={day} draft={draft} errors={errors} pending={pending} onChange={onChange} />
             <div className="flex flex-wrap gap-4">
               <button type="button" className="min-h-12 text-base font-medium text-ink disabled:opacity-40" disabled={pending || index === 0} onClick={() => moveDay(draft, day.key, -1, onChange)}>
                 Move up
@@ -718,6 +733,7 @@ function ItineraryStep({
           </fieldset>
         ))}
       </section>
+      <RouteStartFields draft={draft} errors={errors} pending={pending} onChange={onChange} />
       <Checklist
         title="Inclusions"
         items={draft.inclusionItems}
@@ -751,6 +767,184 @@ function ItineraryStep({
         </label>
       </section>
     </div>
+  )
+}
+
+const routeDayFields = ["campLatitude", "campLongitude", "highPointName", "highPointAltitudeMeters"] as const
+
+function DayRouteFields({
+  day,
+  draft,
+  errors,
+  pending,
+  onChange,
+}: {
+  day: DraftDay
+  draft: ExpeditionDraft
+  errors: FieldErrors
+  pending: boolean
+  onChange: (patch: Partial<ExpeditionDraft>, keys: string[]) => void
+}) {
+  const [open, setOpen] = useState(() => dayHasRouteData(day))
+  const hasError = routeDayFields.some((field) => Boolean(errors[`days.${day.key}.${field}`]))
+  const plotted = parseDegrees(day.campLatitude) != null && parseDegrees(day.campLongitude) != null
+
+  function setCoordinate(field: "campLatitude" | "campLongitude", value: string) {
+    const pair = splitCoordinatePair(value)
+    if (pair) {
+      onChange(
+        { days: draft.days.map((item) => (item.key === day.key ? { ...item, campLatitude: pair[0], campLongitude: pair[1] } : item)) },
+        [`days.${day.key}.campLatitude`, `days.${day.key}.campLongitude`, "days"],
+      )
+      return
+    }
+    patchDay(draft, day.key, field === "campLatitude" ? { campLatitude: value } : { campLongitude: value }, onChange)
+  }
+
+  return (
+    <details
+      open={open || hasError}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+      className={`rounded-2xl border bg-canvas ${hasError ? "border-danger" : "border-line"}`}
+    >
+      <summary className="flex min-h-12 cursor-pointer items-center justify-between gap-3 px-4 py-2 text-base font-medium text-ink">
+        <span>Map and altitude profile (optional)</span>
+        {plotted ? <span className="rounded-full bg-alpine-soft px-3 py-1 text-sm font-semibold text-alpine-deep">On the map</span> : null}
+      </summary>
+      <div className="grid gap-4 border-t border-line p-4">
+        <p className="text-base leading-relaxed text-muted">
+          Coordinates of the sleep stop put this day on the public route map. Leave them blank if the camp is not fixed.
+        </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextField
+            label="Camp latitude"
+            value={day.campLatitude}
+            inputMode="decimal"
+            error={errors[`days.${day.key}.campLatitude`]}
+            hint="Decimal degrees, for example 34.1526. Paste “latitude, longitude” to fill both."
+            disabled={pending}
+            onChange={(value) => setCoordinate("campLatitude", value)}
+          />
+          <TextField
+            label="Camp longitude"
+            value={day.campLongitude}
+            inputMode="decimal"
+            error={errors[`days.${day.key}.campLongitude`]}
+            hint="Decimal degrees east, for example 77.5771."
+            disabled={pending}
+            onChange={(value) => setCoordinate("campLongitude", value)}
+          />
+          <TextField
+            label="Highest point that day"
+            value={day.highPointName}
+            error={errors[`days.${day.key}.highPointName`]}
+            hint="A pass or col crossed that day. Leave blank if the sleep stop is the highest point."
+            disabled={pending}
+            onChange={(value) => patchDay(draft, day.key, { highPointName: value }, onChange)}
+          />
+          <TextField
+            label="High point altitude (m)"
+            value={day.highPointAltitudeMeters}
+            type="number"
+            error={errors[`days.${day.key}.highPointAltitudeMeters`]}
+            disabled={pending}
+            onChange={(value) => patchDay(draft, day.key, { highPointAltitudeMeters: value }, onChange)}
+          />
+        </div>
+        {plotted ? <MapCheckLink latitude={day.campLatitude} longitude={day.campLongitude} /> : null}
+      </div>
+    </details>
+  )
+}
+
+function RouteStartFields({
+  draft,
+  errors,
+  pending,
+  onChange,
+}: {
+  draft: ExpeditionDraft
+  errors: FieldErrors
+  pending: boolean
+  onChange: (patch: Partial<ExpeditionDraft>, keys: string[]) => void
+}) {
+  const plotted = parseDegrees(draft.routeStartLatitude) != null && parseDegrees(draft.routeStartLongitude) != null
+  const plottedDays = draft.days.filter((day) => parseDegrees(day.campLatitude) != null && parseDegrees(day.campLongitude) != null).length
+
+  function setCoordinate(field: "routeStartLatitude" | "routeStartLongitude", value: string) {
+    const pair = splitCoordinatePair(value)
+    if (pair) {
+      onChange({ routeStartLatitude: pair[0], routeStartLongitude: pair[1] }, ["routeStartLatitude", "routeStartLongitude"])
+      return
+    }
+    onChange(field === "routeStartLatitude" ? { routeStartLatitude: value } : { routeStartLongitude: value }, [field])
+  }
+
+  return (
+    <section className={`${cardClass} grid gap-5`} aria-labelledby="route-start-heading">
+      <div>
+        <h3 id="route-start-heading" className="font-display text-2xl font-bold text-ink">
+          Route map start (optional)
+        </h3>
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted">
+          The public map draws a line from this start point through each day’s camp coordinates. It appears once two points are
+          plotted. Right now {plotted ? "the start point and " : ""}
+          {plottedDays} {plottedDays === 1 ? "day is" : "days are"} plotted.
+        </p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <TextField
+          label="Start point name"
+          value={draft.routeStartName}
+          error={errors.routeStartName}
+          hint="The town or base where the route begins."
+          disabled={pending}
+          onChange={(value) => onChange({ routeStartName: value }, ["routeStartName"])}
+        />
+        <TextField
+          label="Start altitude (m)"
+          value={draft.routeStartAltitudeMeters}
+          type="number"
+          error={errors.routeStartAltitudeMeters}
+          hint="Optional. Shown as the first point on the altitude profile."
+          disabled={pending}
+          onChange={(value) => onChange({ routeStartAltitudeMeters: value }, ["routeStartAltitudeMeters"])}
+        />
+        <TextField
+          label="Start latitude"
+          value={draft.routeStartLatitude}
+          inputMode="decimal"
+          error={errors.routeStartLatitude}
+          hint="Paste “latitude, longitude” to fill both."
+          disabled={pending}
+          onChange={(value) => setCoordinate("routeStartLatitude", value)}
+        />
+        <TextField
+          label="Start longitude"
+          value={draft.routeStartLongitude}
+          inputMode="decimal"
+          error={errors.routeStartLongitude}
+          disabled={pending}
+          onChange={(value) => setCoordinate("routeStartLongitude", value)}
+        />
+      </div>
+      {plotted ? <MapCheckLink latitude={draft.routeStartLatitude} longitude={draft.routeStartLongitude} /> : null}
+    </section>
+  )
+}
+
+function MapCheckLink({ latitude, longitude }: { latitude: string; longitude: string }) {
+  const lat = latitude.trim()
+  const lng = longitude.trim()
+  return (
+    <a
+      href={`https://www.openstreetmap.org/?mlat=${encodeURIComponent(lat)}&mlon=${encodeURIComponent(lng)}#map=12/${encodeURIComponent(lat)}/${encodeURIComponent(lng)}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex min-h-11 items-center justify-self-start text-base font-medium text-alpine-deep underline"
+    >
+      Check this point on OpenStreetMap (opens in a new tab)
+    </a>
   )
 }
 
@@ -1305,6 +1499,10 @@ function toDraft(expedition: EditorExpedition | null): ExpeditionDraft {
       ogDescription: "",
       ogImageUrl: "",
       ogImageAlt: "",
+      routeStartName: "",
+      routeStartLatitude: "",
+      routeStartLongitude: "",
+      routeStartAltitudeMeters: "",
       days: [blankDay(1, "day-0")],
       gallery: [],
       departures: [],
@@ -1341,6 +1539,10 @@ function toDraft(expedition: EditorExpedition | null): ExpeditionDraft {
     ogDescription: expedition.ogDescription,
     ogImageUrl: expedition.ogImageUrl,
     ogImageAlt: expedition.ogImageAlt,
+    routeStartName: expedition.routeStart.name ?? "",
+    routeStartLatitude: optionalText(expedition.routeStart.latitude),
+    routeStartLongitude: optionalText(expedition.routeStart.longitude),
+    routeStartAltitudeMeters: optionalText(expedition.routeStart.altitudeMeters),
     days: expedition.days.length
       ? expedition.days.map((day, index) => ({
           key: `day-${index}`,
@@ -1350,6 +1552,10 @@ function toDraft(expedition: EditorExpedition | null): ExpeditionDraft {
           sleepStop: day.sleepStop,
           sleepAltitudeMeters: String(day.sleepAltitudeMeters),
           movingHours: String(day.movingHours),
+          campLatitude: optionalText(day.campLatitude),
+          campLongitude: optionalText(day.campLongitude),
+          highPointName: day.highPointName ?? "",
+          highPointAltitudeMeters: optionalText(day.highPointAltitudeMeters),
         }))
       : [blankDay(1, "day-0")],
     gallery: expedition.gallery.map((image, index) => ({ key: `gallery-${index}`, url: image.url, alt: image.alt })),
@@ -1366,8 +1572,24 @@ function listFromText(text: string, prefix: string): DraftListItem[] {
   return rows.map((line, index) => ({ key: `${prefix}-${index}`, text: line, included: true }))
 }
 
+function optionalText(value: number | null): string {
+  return value == null ? "" : String(value)
+}
+
 function blankDay(dayNumber: number, key = rowKey("day")): DraftDay {
-  return { key, dayNumber: String(dayNumber), title: "", body: "", sleepStop: "", sleepAltitudeMeters: "", movingHours: "" }
+  return {
+    key,
+    dayNumber: String(dayNumber),
+    title: "",
+    body: "",
+    sleepStop: "",
+    sleepAltitudeMeters: "",
+    movingHours: "",
+    campLatitude: "",
+    campLongitude: "",
+    highPointName: "",
+    highPointAltitudeMeters: "",
+  }
 }
 
 function blankDeparture(): DraftDeparture {

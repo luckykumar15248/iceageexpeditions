@@ -13,6 +13,7 @@ import { isFutureDepartureDate } from "@/lib/dates"
 import { getPrisma } from "@/lib/db"
 import { DomainError, DomainErrorCode } from "@/lib/errors"
 import { requireOpsStaff } from "@/lib/ops-auth"
+import { ROUTE_ALTITUDE_MAX, decimalOrNull, latitudeInRange, longitudeInRange } from "@/lib/route-geo"
 import { StaffPermission, requireStaff } from "@/lib/staff"
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -25,6 +26,18 @@ export type CmsDay = {
   sleepStop: string
   sleepAltitudeMeters: number
   movingHours: number
+  /** Omitted (undefined) keeps the stored value for this day number; null clears it. */
+  campLatitude?: number | null
+  campLongitude?: number | null
+  highPointName?: string | null
+  highPointAltitudeMeters?: number | null
+}
+
+export type CmsRouteStart = {
+  name: string | null
+  latitude: number | null
+  longitude: number | null
+  altitudeMeters: number | null
 }
 
 export type CmsImage = { url: string; alt: string }
@@ -56,6 +69,8 @@ export type CmsExpeditionInput = {
   ogDescription: string
   ogImageUrl: string
   ogImageAlt: string
+  /** Omitted keeps the stored start point. */
+  routeStart?: CmsRouteStart
   days: CmsDay[]
   gallery: CmsImage[]
 }
@@ -112,6 +127,45 @@ function movingHoursValue(value: number): string {
     throw new DomainError(DomainErrorCode.CONTENT_INVALID, "Moving hours must be between 0 and 18")
   }
   return hours.toFixed(1)
+}
+
+function coordinatePair(
+  latitude: number | null | undefined,
+  longitude: number | null | undefined,
+  label: string,
+): { latitude: string; longitude: string } | null {
+  if (latitude == null && longitude == null) return null
+  if (latitude == null || longitude == null) {
+    throw new DomainError(DomainErrorCode.CONTENT_INVALID, `${label} needs both latitude and longitude`)
+  }
+  if (!Number.isFinite(latitude) || !latitudeInRange(latitude) || !Number.isFinite(longitude) || !longitudeInRange(longitude)) {
+    throw new DomainError(DomainErrorCode.CONTENT_INVALID, `${label} coordinates are outside the Himalayan service area`)
+  }
+  return { latitude: latitude.toFixed(6), longitude: longitude.toFixed(6) }
+}
+
+function optionalAltitude(value: number | null | undefined, label: string): number | null {
+  if (value == null) return null
+  if (!Number.isInteger(value) || value < 0 || value > ROUTE_ALTITUDE_MAX) {
+    throw new DomainError(DomainErrorCode.CONTENT_INVALID, `${label} must be between 0 and ${ROUTE_ALTITUDE_MAX} metres`)
+  }
+  return value
+}
+
+function routeStartData(start: CmsRouteStart) {
+  const name = start.name?.trim() || null
+  const coordinates = coordinatePair(start.latitude, start.longitude, "Route start")
+  const altitude = optionalAltitude(start.altitudeMeters, "Route start altitude")
+  if ((coordinates || altitude != null) && (!name || name.length < 2)) {
+    throw new DomainError(DomainErrorCode.CONTENT_INVALID, "Name the route start point")
+  }
+  if (name && name.length > 180) throw new DomainError(DomainErrorCode.CONTENT_INVALID, "Route start name is too long")
+  return {
+    routeStartName: name,
+    routeStartLatitude: coordinates?.latitude ?? null,
+    routeStartLongitude: coordinates?.longitude ?? null,
+    routeStartAltitudeMeters: altitude,
+  }
 }
 
 function rupeesToPaisa(value: string, label: string): number {
@@ -181,12 +235,33 @@ export async function saveExpedition(input: CmsExpeditionInput): Promise<{ id: s
     if (!Number.isFinite(day.movingHours) || day.movingHours < 0 || day.movingHours > 18) {
       throw new DomainError(DomainErrorCode.CONTENT_INVALID, `Day ${day.dayNumber} moving hours must be between 0 and 18`)
     }
-    return day
+    const coordinatesGiven = day.campLatitude !== undefined || day.campLongitude !== undefined
+    const camp = coordinatesGiven ? coordinatePair(day.campLatitude, day.campLongitude, `Day ${day.dayNumber} camp`) : undefined
+    const highPointGiven = day.highPointName !== undefined || day.highPointAltitudeMeters !== undefined
+    let highPoint: { name: string | null; altitude: number | null } | undefined
+    if (highPointGiven) {
+      const name = day.highPointName?.trim() || null
+      const altitude = optionalAltitude(day.highPointAltitudeMeters, `Day ${day.dayNumber} high point`)
+      if ((name == null) !== (altitude == null)) {
+        throw new DomainError(DomainErrorCode.CONTENT_INVALID, `Day ${day.dayNumber} high point needs both a name and an altitude`)
+      }
+      if (name && name.length > 180) throw new DomainError(DomainErrorCode.CONTENT_INVALID, `Day ${day.dayNumber} high point name is too long`)
+      if (altitude != null && altitude > input.maxAltitudeMeters) {
+        throw new DomainError(DomainErrorCode.CONTENT_INVALID, `Day ${day.dayNumber} high point is above the route's max altitude`)
+      }
+      if (altitude != null && altitude < day.sleepAltitudeMeters) {
+        throw new DomainError(DomainErrorCode.CONTENT_INVALID, `Day ${day.dayNumber} high point is below that night's sleep altitude`)
+      }
+      highPoint = { name, altitude }
+    }
+    return { ...day, camp, highPoint }
   })
   const dayNumbers = new Set(days.map((day) => day.dayNumber))
   if (dayNumbers.size !== days.length) {
     throw new DomainError(DomainErrorCode.CONTENT_INVALID, "Each itinerary day number must be unique")
   }
+  const routeStart = input.routeStart ? routeStartData(input.routeStart) : undefined
+  const plottedDays = days.filter((day) => day.camp).length
 
   const gallery = input.gallery.slice(0, 12).map((image, index) => ({
     url: mediaUrl(image.url, `Gallery image ${index + 1}`),
@@ -243,8 +318,18 @@ export async function saveExpedition(input: CmsExpeditionInput): Promise<{ id: s
       ogDescription: optionalText(input.ogDescription, 320, "Social description"),
       ogImageUrl,
       ogImageAlt,
+      ...(routeStart ?? {}),
       status,
     }
+
+    const stored =
+      input.id && days.some((day) => day.camp === undefined || day.highPoint === undefined)
+        ? await tx.itineraryDay.findMany({
+            where: { expeditionId: input.id },
+            select: { dayNumber: true, campLatitude: true, campLongitude: true, highPointName: true, highPointAltitudeMeters: true },
+          })
+        : []
+    const storedByDay = new Map(stored.map((row) => [row.dayNumber, row]))
 
     const expedition = input.id
       ? await tx.expedition.update({ where: { id: input.id }, data, select: { id: true, slug: true } })
@@ -253,15 +338,23 @@ export async function saveExpedition(input: CmsExpeditionInput): Promise<{ id: s
     await tx.itineraryDay.deleteMany({ where: { expeditionId: expedition.id } })
     if (days.length > 0) {
       await tx.itineraryDay.createMany({
-        data: days.map((day) => ({
-          expeditionId: expedition.id,
-          dayNumber: day.dayNumber,
-          title: day.title.trim(),
-          body: day.body.trim(),
-          sleepStop: day.sleepStop.trim(),
-          sleepAltitudeMeters: day.sleepAltitudeMeters,
-          movingHours: movingHoursValue(day.movingHours),
-        })),
+        data: days.map((day) => {
+          const previous = storedByDay.get(day.dayNumber)
+          return {
+            expeditionId: expedition.id,
+            dayNumber: day.dayNumber,
+            title: day.title.trim(),
+            body: day.body.trim(),
+            sleepStop: day.sleepStop.trim(),
+            sleepAltitudeMeters: day.sleepAltitudeMeters,
+            movingHours: movingHoursValue(day.movingHours),
+            campLatitude: day.camp === undefined ? (previous?.campLatitude ?? null) : (day.camp?.latitude ?? null),
+            campLongitude: day.camp === undefined ? (previous?.campLongitude ?? null) : (day.camp?.longitude ?? null),
+            highPointName: day.highPoint === undefined ? (previous?.highPointName ?? null) : day.highPoint.name,
+            highPointAltitudeMeters:
+              day.highPoint === undefined ? (previous?.highPointAltitudeMeters ?? null) : day.highPoint.altitude,
+          }
+        }),
       })
     }
     await tx.expeditionImage.deleteMany({ where: { expeditionId: expedition.id } })
@@ -277,7 +370,7 @@ export async function saveExpedition(input: CmsExpeditionInput): Promise<{ id: s
       entityType: "Expedition",
       entityId: expedition.id,
       reason: input.id ? "Staff updated the expedition record" : "Staff created the expedition record",
-      after: { slug, status, dayCount: days.length, galleryCount: gallery.length },
+      after: { slug, status, dayCount: days.length, galleryCount: gallery.length, plottedDays },
     })
     return expedition
   })
@@ -423,7 +516,8 @@ export type CmsExpeditionRecord = {
   ogDescription: string
   ogImageUrl: string
   ogImageAlt: string
-  days: CmsDay[]
+  routeStart: CmsRouteStart
+  days: Required<CmsDay>[]
   gallery: CmsImage[]
   departures: {
     id: string
@@ -464,6 +558,10 @@ const cmsSelect = {
   ogDescription: true,
   ogImageUrl: true,
   ogImageAlt: true,
+  routeStartName: true,
+  routeStartLatitude: true,
+  routeStartLongitude: true,
+  routeStartAltitudeMeters: true,
   region: { select: { name: true } },
   days: {
     orderBy: { dayNumber: "asc" as const },
@@ -474,6 +572,10 @@ const cmsSelect = {
       sleepStop: true,
       sleepAltitudeMeters: true,
       movingHours: true,
+      campLatitude: true,
+      campLongitude: true,
+      highPointName: true,
+      highPointAltitudeMeters: true,
     },
   },
   gallery: { orderBy: { sortOrder: "asc" as const }, select: { url: true, alt: true } },
@@ -525,6 +627,12 @@ export async function loadCmsExpedition(id: string): Promise<CmsExpeditionRecord
       ogDescription: row.ogDescription ?? "",
       ogImageUrl: row.ogImageUrl ?? "",
       ogImageAlt: row.ogImageAlt ?? "",
+      routeStart: {
+        name: row.routeStartName,
+        latitude: decimalOrNull(row.routeStartLatitude),
+        longitude: decimalOrNull(row.routeStartLongitude),
+        altitudeMeters: row.routeStartAltitudeMeters,
+      },
       days: row.days.map((day) => ({
         dayNumber: day.dayNumber,
         title: day.title,
@@ -532,6 +640,10 @@ export async function loadCmsExpedition(id: string): Promise<CmsExpeditionRecord
         sleepStop: day.sleepStop,
         sleepAltitudeMeters: day.sleepAltitudeMeters,
         movingHours: Number(day.movingHours),
+        campLatitude: decimalOrNull(day.campLatitude),
+        campLongitude: decimalOrNull(day.campLongitude),
+        highPointName: day.highPointName,
+        highPointAltitudeMeters: day.highPointAltitudeMeters,
       })),
       gallery: row.gallery,
       departures: row.departures.map((departure) => ({

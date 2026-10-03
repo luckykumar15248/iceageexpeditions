@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { isFutureDepartureDate } from "@/lib/dates"
+import { ROUTE_ALTITUDE_MAX, coordinateProblems } from "@/lib/route-geo"
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const DAY = /^\d{4}-\d{2}-\d{2}$/
@@ -14,6 +15,10 @@ export type DraftDay = {
   sleepStop: string
   sleepAltitudeMeters: string
   movingHours: string
+  campLatitude: string
+  campLongitude: string
+  highPointName: string
+  highPointAltitudeMeters: string
 }
 
 export type DraftImage = { key: string; url: string; alt: string }
@@ -56,6 +61,10 @@ export type ExpeditionDraft = {
   ogDescription: string
   ogImageUrl: string
   ogImageAlt: string
+  routeStartName: string
+  routeStartLatitude: string
+  routeStartLongitude: string
+  routeStartAltitudeMeters: string
   days: DraftDay[]
   gallery: DraftImage[]
   departures: DraftDeparture[]
@@ -80,7 +89,15 @@ export function slugifyTitle(value: string): string {
 }
 
 export function stepOfField(key: string): number {
-  if (key.startsWith("days") || key.startsWith("inclusion") || key.startsWith("exclusion") || key === "permitNotes") return 1
+  if (
+    key.startsWith("days") ||
+    key.startsWith("inclusion") ||
+    key.startsWith("exclusion") ||
+    key.startsWith("routeStart") ||
+    key === "permitNotes"
+  ) {
+    return 1
+  }
   if (key.startsWith("departures")) return 2
   if (
     key.startsWith("meta") ||
@@ -100,7 +117,27 @@ export function firstInvalidStep(errors: FieldErrors): number {
 }
 
 export function dayTouched(day: DraftDay): boolean {
-  return [day.title, day.body, day.sleepStop, day.sleepAltitudeMeters, day.movingHours].some((value) => value.trim() !== "")
+  return [
+    day.title,
+    day.body,
+    day.sleepStop,
+    day.sleepAltitudeMeters,
+    day.movingHours,
+    day.campLatitude,
+    day.campLongitude,
+    day.highPointName,
+    day.highPointAltitudeMeters,
+  ].some((value) => value.trim() !== "")
+}
+
+export function dayHasRouteData(day: DraftDay): boolean {
+  return [day.campLatitude, day.campLongitude, day.highPointName, day.highPointAltitudeMeters].some((value) => value.trim() !== "")
+}
+
+export function routeStartTouched(draft: ExpeditionDraft): boolean {
+  return [draft.routeStartName, draft.routeStartLatitude, draft.routeStartLongitude, draft.routeStartAltitudeMeters].some(
+    (value) => value.trim() !== "",
+  )
 }
 
 export function departureTouched(row: DraftDeparture): boolean {
@@ -147,6 +184,10 @@ const draftSchema = z
     ogDescription: z.string().max(320),
     ogImageUrl: z.string().max(500),
     ogImageAlt: z.string().max(240),
+    routeStartName: z.string().max(180),
+    routeStartLatitude: z.string().max(16),
+    routeStartLongitude: z.string().max(16),
+    routeStartAltitudeMeters: z.string().max(8),
     days: z
       .array(
         z.object({
@@ -157,6 +198,10 @@ const draftSchema = z
           sleepStop: z.string().max(180),
           sleepAltitudeMeters: z.string().max(8),
           movingHours: z.string().max(8),
+          campLatitude: z.string().max(16),
+          campLongitude: z.string().max(16),
+          highPointName: z.string().max(180),
+          highPointAltitudeMeters: z.string().max(8),
         }),
       )
       .max(40),
@@ -228,6 +273,10 @@ export function normalizeDraft(value: unknown): ExpeditionDraft {
     ogDescription: clean(raw.ogDescription, 320),
     ogImageUrl: clean(raw.ogImageUrl, 500),
     ogImageAlt: clean(raw.ogImageAlt, 240),
+    routeStartName: clean(raw.routeStartName, 180),
+    routeStartLatitude: clean(raw.routeStartLatitude, 16),
+    routeStartLongitude: clean(raw.routeStartLongitude, 16),
+    routeStartAltitudeMeters: clean(raw.routeStartAltitudeMeters, 8),
     days: days.length > 0 ? days : [normalizeDay({}, 0)],
     gallery: Array.isArray(raw.gallery) ? raw.gallery.slice(0, 16).map((image, index) => normalizeImage(image, index)) : [],
     departures: Array.isArray(raw.departures) ? raw.departures.slice(0, 30).map((row, index) => normalizeDeparture(row, index)) : [],
@@ -244,6 +293,10 @@ function normalizeDay(value: unknown, index: number): DraftDay {
     sleepStop: clean(row.sleepStop, 180),
     sleepAltitudeMeters: clean(row.sleepAltitudeMeters, 8),
     movingHours: clean(row.movingHours, 8),
+    campLatitude: clean(row.campLatitude, 16),
+    campLongitude: clean(row.campLongitude, 16),
+    highPointName: clean(row.highPointName, 180),
+    highPointAltitudeMeters: clean(row.highPointAltitudeMeters, 8),
   }
 }
 
@@ -346,6 +399,7 @@ function ruleErrors(draft: ExpeditionDraft, intent: "draft" | "publish"): FieldE
     errors.days = "A published route needs at least one itinerary day."
   }
   const seen = new Set<number>()
+  const maxAltitude = /^\d+$/.test(draft.maxAltitudeMeters.trim()) ? Number(draft.maxAltitudeMeters) : null
   draft.days.forEach((day) => {
     if (!dayTouched(day)) return
     const dayNumber = Number(day.dayNumber)
@@ -373,7 +427,40 @@ function ruleErrors(draft: ExpeditionDraft, intent: "draft" | "publish"): FieldE
       const hours = Number(day.movingHours)
       if (hours < 0 || hours > 18) errors[`days.${day.key}.movingHours`] = "Moving hours must be between 0 and 18."
     }
+    const camp = coordinateProblems(day.campLatitude, day.campLongitude)
+    if (camp.latitude) errors[`days.${day.key}.campLatitude`] = camp.latitude
+    if (camp.longitude) errors[`days.${day.key}.campLongitude`] = camp.longitude
+    const highName = day.highPointName.trim()
+    const highText = day.highPointAltitudeMeters.trim()
+    if (highName && highName.length < 2) errors[`days.${day.key}.highPointName`] = "Name the pass or high point, or clear this field."
+    if (highText && !highName) errors[`days.${day.key}.highPointName`] = "Name the pass or high point for this altitude."
+    if (highName && !highText) errors[`days.${day.key}.highPointAltitudeMeters`] = "Enter the high point altitude in metres."
+    if (highText) {
+      const high = /^\d+$/.test(highText) ? Number(highText) : Number.NaN
+      if (!Number.isInteger(high) || high < 0 || high > ROUTE_ALTITUDE_MAX) {
+        errors[`days.${day.key}.highPointAltitudeMeters`] = `High point altitude must be between 0 and ${ROUTE_ALTITUDE_MAX} metres.`
+      } else if (maxAltitude != null && high > maxAltitude) {
+        errors[`days.${day.key}.highPointAltitudeMeters`] = `This is above the route’s max altitude (${maxAltitude} m). Update one of them.`
+      } else if (/^\d+$/.test(day.sleepAltitudeMeters.trim()) && high < Number(day.sleepAltitudeMeters)) {
+        errors[`days.${day.key}.highPointAltitudeMeters`] = "The day’s high point cannot be below that night’s sleep altitude."
+      }
+    }
   })
+
+  if (routeStartTouched(draft)) {
+    const start = coordinateProblems(draft.routeStartLatitude, draft.routeStartLongitude)
+    if (start.latitude) errors.routeStartLatitude = start.latitude
+    if (start.longitude) errors.routeStartLongitude = start.longitude
+    const startName = draft.routeStartName.trim()
+    if (startName.length < 2) errors.routeStartName = "Name the start point, or clear the start point fields."
+    const startAltitude = draft.routeStartAltitudeMeters.trim()
+    if (startAltitude) {
+      const value = /^\d+$/.test(startAltitude) ? Number(startAltitude) : Number.NaN
+      if (!Number.isInteger(value) || value < 0 || value > ROUTE_ALTITUDE_MAX) {
+        errors.routeStartAltitudeMeters = `Start altitude must be between 0 and ${ROUTE_ALTITUDE_MAX} metres.`
+      }
+    }
+  }
 
   if (draft.permitNotes.trim().length > 5000) errors.permitNotes = "Permit notes are too long."
 

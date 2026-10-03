@@ -1,5 +1,6 @@
 const links = [
   { href: "#overview", label: "Overview" },
+  { href: "#route", label: "Route" },
   { href: "#itinerary", label: "Itinerary" },
   { href: "#departures", label: "Departures" },
   { href: "#inclusions", label: "Inclusions" },

@@ -20,6 +20,7 @@ import {
   textLines,
   vehicleLabel,
 } from "@/lib/format"
+import { decimalOrNull, type RoutePoint } from "@/lib/route-geo"
 
 const PUBLIC_DEPARTURE_STATUSES = [
   DepartureStatus.OPEN,
@@ -82,9 +83,14 @@ export type ItineraryStop = {
   sleepStop: string
   sleepAltitudeMeters: number
   movingHoursLabel: string
+  highPointName: string | null
+  highPointAltitudeMeters: number | null
 }
 
 export type ExpeditionDetail = ExpeditionCard & {
+  /** Start point (when plotted) then each day with camp coordinates, in day order. */
+  routePoints: RoutePoint[]
+  routeStart: { name: string; altitudeMeters: number | null } | null
   inclusions: string[]
   inclusionText: string
   exclusions: string[]
@@ -395,6 +401,10 @@ const loadExpeditionDetail = unstable_cache(
           ogDescription: true,
           ogImageUrl: true,
           ogImageAlt: true,
+          routeStartName: true,
+          routeStartLatitude: true,
+          routeStartLongitude: true,
+          routeStartAltitudeMeters: true,
           gallery: { orderBy: { sortOrder: "asc" }, select: { url: true, alt: true } },
           days: {
             orderBy: { dayNumber: "asc" },
@@ -405,6 +415,10 @@ const loadExpeditionDetail = unstable_cache(
               sleepStop: true,
               sleepAltitudeMeters: true,
               movingHours: true,
+              campLatitude: true,
+              campLongitude: true,
+              highPointName: true,
+              highPointAltitudeMeters: true,
             },
           },
         },
@@ -454,7 +468,13 @@ const loadExpeditionDetail = unstable_cache(
         sleepStop: day.sleepStop,
         sleepAltitudeMeters: day.sleepAltitudeMeters,
         movingHoursLabel: formatMovingHours(Number(day.movingHours)),
+        highPointName: day.highPointName,
+        highPointAltitudeMeters: day.highPointAltitudeMeters,
       })),
+      routePoints: toRoutePoints(result),
+      routeStart: result.routeStartName
+        ? { name: result.routeStartName, altitudeMeters: result.routeStartAltitudeMeters }
+        : null,
       departures,
       updatedAtIso: result.updatedAt.toISOString(),
       heroImageAlt: result.heroImageAlt,
@@ -470,9 +490,57 @@ const loadExpeditionDetail = unstable_cache(
       gallery: result.gallery,
     }
   },
-  ["expedition-detail"],
+  ["expedition-detail-v2"],
   CATALOG_CACHE,
 )
+
+type DecimalLike = { toNumber(): number } | null
+
+function toRoutePoints(row: {
+  routeStartName: string | null
+  routeStartLatitude: DecimalLike
+  routeStartLongitude: DecimalLike
+  routeStartAltitudeMeters: number | null
+  days: {
+    dayNumber: number
+    sleepStop: string
+    sleepAltitudeMeters: number
+    campLatitude: DecimalLike
+    campLongitude: DecimalLike
+    highPointName: string | null
+    highPointAltitudeMeters: number | null
+  }[]
+}): RoutePoint[] {
+  const points: RoutePoint[] = []
+  const startLatitude = decimalOrNull(row.routeStartLatitude)
+  const startLongitude = decimalOrNull(row.routeStartLongitude)
+  if (row.routeStartName && startLatitude != null && startLongitude != null) {
+    points.push({
+      label: row.routeStartName,
+      dayNumber: null,
+      latitude: startLatitude,
+      longitude: startLongitude,
+      altitudeMeters: row.routeStartAltitudeMeters,
+      highPointName: null,
+      highPointAltitudeMeters: null,
+    })
+  }
+  for (const day of row.days) {
+    const latitude = decimalOrNull(day.campLatitude)
+    const longitude = decimalOrNull(day.campLongitude)
+    if (latitude == null || longitude == null) continue
+    points.push({
+      label: day.sleepStop,
+      dayNumber: day.dayNumber,
+      latitude,
+      longitude,
+      altitudeMeters: day.sleepAltitudeMeters,
+      highPointName: day.highPointName,
+      highPointAltitudeMeters: day.highPointAltitudeMeters,
+    })
+  }
+  return points
+}
 
 export const getExpeditionDetail = cache(async (slug: string): Promise<ExpeditionDetail | "offline" | null> => {
   return loadExpeditionDetail(slug)

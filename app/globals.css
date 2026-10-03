@@ -67,6 +67,42 @@ summary::-webkit-details-marker {
   background: linear-gradient(180deg, color-mix(in srgb, var(--color-ink) 10%, transparent), color-mix(in srgb, var(--color-ink) 88%, transparent));
 }
 
+.route-map.leaflet-container {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  background: var(--color-canvas);
+}
+
+.route-map .route-line {
+  stroke: var(--color-alpine);
+}
+
+.route-map .route-line-casing {
+  stroke: var(--color-paper);
+}
+
+.route-map .leaflet-tooltip.route-tooltip {
+  border: 1px solid var(--color-line);
+  border-radius: 0.75rem;
+  color: var(--color-ink);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 10px 24px rgba(26, 29, 27, 0.12);
+}
+
+.route-map .leaflet-control-zoom a {
+  width: 2.75rem;
+  height: 2.75rem;
+  line-height: 2.75rem;
+  font-size: 1.25rem;
+}
+
+.route-map .leaflet-control-layers-toggle {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

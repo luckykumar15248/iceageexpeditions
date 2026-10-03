@@ -323,6 +323,12 @@ function toExpeditionInput(draft: ExpeditionDraft, status: "DRAFT" | "PUBLISHED"
     ogDescription: draft.ogDescription,
     ogImageUrl: draft.ogImageUrl,
     ogImageAlt: draft.ogImageAlt,
+    routeStart: {
+      name: draft.routeStartName.trim() || null,
+      latitude: optionalNumber(draft.routeStartLatitude),
+      longitude: optionalNumber(draft.routeStartLongitude),
+      altitudeMeters: optionalNumber(draft.routeStartAltitudeMeters),
+    },
     days: draft.days.filter(dayTouched).map((day) => ({
       dayNumber: Number(day.dayNumber),
       title: day.title,
@@ -330,9 +336,20 @@ function toExpeditionInput(draft: ExpeditionDraft, status: "DRAFT" | "PUBLISHED"
       sleepStop: day.sleepStop,
       sleepAltitudeMeters: Number(day.sleepAltitudeMeters),
       movingHours: Number(day.movingHours),
+      campLatitude: optionalNumber(day.campLatitude),
+      campLongitude: optionalNumber(day.campLongitude),
+      highPointName: day.highPointName.trim() || null,
+      highPointAltitudeMeters: optionalNumber(day.highPointAltitudeMeters),
     })),
     gallery: draft.gallery.filter(imageTouched).map((image) => ({ url: image.url, alt: image.alt })),
   }
+}
+
+function optionalNumber(value: string): number | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  const number = Number(trimmed)
+  return Number.isFinite(number) ? number : Number.NaN
 }
 
 function saveFailure(error: unknown, fallback = "The expedition could not be saved. Your entries are still on this page."): {
