@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { headers } from "next/headers"
 import { signOutOps } from "@/app/(ops)/ops/actions"
+import { countPendingComments } from "@/lib/blog-admin"
 import { staffRoleLabel } from "@/lib/staff"
 import type { OpsStaff } from "@/lib/ops-auth"
 
@@ -13,10 +14,15 @@ const links = [
   { href: "/ops/hero-slides", label: "Hero slides" },
   { href: "/ops/galleries", label: "Gallery" },
   { href: "/ops/media", label: "Media library" },
+  { href: "/ops/blog", label: "Blog posts" },
+  { href: "/ops/comments", label: "Comments" },
 ] as const
 
 export async function OpsFrame({ staff, children }: { staff: OpsStaff; children: React.ReactNode }) {
-  const path = (await headers()).get("x-ops-path") ?? ""
+  const [path, pendingComments] = await Promise.all([
+    headers().then((list) => list.get("x-ops-path") ?? ""),
+    countPendingComments(),
+  ])
   return (
     <div className="min-h-screen bg-canvas lg:grid lg:grid-cols-[18rem_minmax(0,1fr)]">
       <aside className="border-b border-line bg-paper lg:min-h-screen lg:border-r lg:border-b-0">
@@ -38,7 +44,13 @@ export async function OpsFrame({ staff, children }: { staff: OpsStaff; children:
                     aria-current={current ? "page" : undefined}
                     className={`flex min-h-12 items-center rounded-2xl px-4 text-base font-medium ${current ? "bg-alpine-soft text-alpine-deep" : "text-ink hover:bg-canvas"}`}
                   >
-                    {link.label}
+                    <span className="flex-1">{link.label}</span>
+                    {link.href === "/ops/comments" && pendingComments > 0 ? (
+                      <span className="ml-2 inline-flex min-w-7 items-center justify-center rounded-full bg-alpine px-2 py-0.5 text-sm font-semibold text-white">
+                        {pendingComments > 99 ? "99+" : pendingComments}
+                        <span className="sr-only"> pending</span>
+                      </span>
+                    ) : null}
                   </Link>
                 </li>
               )

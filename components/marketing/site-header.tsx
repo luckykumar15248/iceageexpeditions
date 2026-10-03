@@ -9,6 +9,7 @@ const links = [
   { href: "/expeditions?vehicle=MOTORBIKE", label: "Motorbike", match: "MOTORBIKE" },
   { href: "/safety", label: "Safety", match: "" },
   { href: "/gallery", label: "Gallery", match: "" },
+  { href: "/blog", label: "Blog", match: "" },
   { href: "/gear", label: "Gear", match: "" },
   { href: "/faq", label: "FAQ", match: "" },
   { href: "/contact", label: "Contact", match: "" },
@@ -29,7 +30,7 @@ export function SiteHeader() {
         </Link>
         <nav aria-label="Primary" className="hidden items-center gap-6 lg:flex">
           {links.map((link) => {
-            const current = link.match ? false : pathname === link.href
+            const current = link.match ? false : pathname === link.href || pathname.startsWith(`${link.href}/`)
             return (
               <Link
                 key={link.href}

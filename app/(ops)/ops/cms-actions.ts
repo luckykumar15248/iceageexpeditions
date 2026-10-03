@@ -484,12 +484,14 @@ export async function deleteMediaAction(id: string): Promise<{ ok: boolean; mess
   try {
     const asset = await prisma.mediaAsset.findUnique({ where: { id } })
     if (!asset) return { ok: false, message: "Asset not found." }
-    const [usedBySlide, usedByGallery] = await Promise.all([
+    const [usedBySlide, usedByGallery, usedByPost] = await Promise.all([
       prisma.heroSlide.count({ where: { mediaAssetId: id } }),
       prisma.galleryItem.count({ where: { mediaAssetId: id } }),
+      prisma.blogPost.count({ where: { OR: [{ featuredMediaId: id }, { featuredImageUrl: asset.url }] } }),
     ])
     if (usedBySlide > 0) return { ok: false, message: "This asset is used by a hero slide. Remove it from the slide first." }
     if (usedByGallery > 0) return { ok: false, message: "This asset is used by a gallery item. Remove it from the gallery first." }
+    if (usedByPost > 0) return { ok: false, message: "This asset is the featured image of a blog post. Change the post image first." }
     await prisma.$transaction(async (tx) => {
       await tx.mediaAsset.delete({ where: { id } })
       await writeAudit(tx, {

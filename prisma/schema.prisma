@@ -98,6 +98,25 @@ enum AuditAction {
   GALLERY_ITEM_ADDED
   GALLERY_ITEM_DELETED
   GALLERY_ITEMS_REORDERED
+  BLOG_POST_SAVED
+  BLOG_POST_DELETED
+  BLOG_CATEGORY_SAVED
+  BLOG_CATEGORY_DELETED
+  BLOG_COMMENT_MODERATED
+  BLOG_COMMENT_DELETED
+}
+
+/// DRAFT is never public. PUBLISHED with a future publishedAt is "scheduled" and stays hidden until then.
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+/// Reader comments start PENDING and only APPROVED ones render on the post.
+enum BlogCommentStatus {
+  PENDING
+  APPROVED
+  SPAM
 }
 
 model Region {
@@ -330,6 +349,8 @@ model StaffUser {
   cancelledBookings Booking[]    @relation("BookingCancelledBy")
   enquiryNotes      EnquiryNote[]
   mediaAssets       MediaAsset[]
+  blogPosts         BlogPost[]    @relation("BlogPostAuthor")
+  moderatedComments BlogComment[] @relation("BlogCommentModerator")
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
@@ -356,6 +377,7 @@ model MediaAsset {
   uploadedBy        StaffUser      @relation(fields: [uploadedByStaffId], references: [id], onDelete: Restrict)
   heroSlides        HeroSlide[]
   galleryItems      GalleryItem[]
+  blogPosts         BlogPost[]
   createdAt         DateTime       @default(now())
 
   @@index([uploadedByStaffId])
@@ -411,6 +433,104 @@ model GalleryItem {
 
   @@index([active, sortOrder])
   @@index([category])
+}
+
+/// One primary section per post (Route guides, Riding skills, …). Shown as the filter chips on /blog.
+model BlogCategory {
+  id          String     @id @default(cuid())
+  name        String     @unique @db.VarChar(80)
+  slug        String     @unique @db.VarChar(100)
+  description String?    @db.VarChar(300)
+  /// Lower numbers appear first in filters.
+  sortOrder   Int        @default(0)
+  posts       BlogPost[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([sortOrder])
+}
+
+/// Free-form keywords. Created on save from the post editor.
+model BlogTag {
+  id        String        @id @default(cuid())
+  name      String        @unique @db.VarChar(60)
+  slug      String        @unique @db.VarChar(80)
+  posts     BlogPostTag[]
+  createdAt DateTime      @default(now())
+}
+
+model BlogPost {
+  id               String         @id @default(cuid())
+  slug             String         @unique @db.VarChar(160)
+  title            String         @db.VarChar(200)
+  /// Card and meta-description fallback. Plain text.
+  excerpt          String         @db.VarChar(400)
+  /// Markdown subset rendered by lib/markdown.tsx. Never rendered as raw HTML.
+  body             String         @db.MediumText
+  status           BlogPostStatus @default(DRAFT)
+  /// Set when first published. A future value schedules the post.
+  publishedAt      DateTime?
+  /// Computed on save from the body word count.
+  readingMinutes   Int            @default(1)
+  featured         Boolean        @default(false)
+  commentsEnabled  Boolean        @default(true)
+  featuredImageUrl String?        @db.VarChar(500)
+  featuredImageAlt String?        @db.VarChar(240)
+  featuredMediaId  String?
+  featuredMedia    MediaAsset?    @relation(fields: [featuredMediaId], references: [id], onDelete: SetNull)
+  categoryId       String?
+  category         BlogCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  authorStaffId    String
+  author           StaffUser      @relation("BlogPostAuthor", fields: [authorStaffId], references: [id], onDelete: Restrict)
+  /// SEO overrides. Empty falls back to title / excerpt.
+  metaTitle        String?        @db.VarChar(70)
+  metaDescription  String?        @db.VarChar(170)
+  robotsIndex      Boolean        @default(true)
+  tags             BlogPostTag[]
+  comments         BlogComment[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([status, publishedAt])
+  @@index([categoryId, status, publishedAt])
+  @@index([featured, status, publishedAt])
+  @@index([authorStaffId])
+  @@index([featuredMediaId])
+}
+
+model BlogPostTag {
+  postId String
+  tagId  String
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+}
+
+model BlogComment {
+  id                 String            @id @default(cuid())
+  postId             String
+  post               BlogPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorName         String            @db.VarChar(80)
+  /// Never rendered publicly.
+  authorEmail        String            @db.VarChar(191)
+  /// Plain text. Rendered with line breaks only, no links or markup.
+  body               String            @db.Text
+  status             BlogCommentStatus @default(PENDING)
+  /// HMAC of the client IP for rate limiting. The raw IP is not stored.
+  ipHash             String?           @db.VarChar(64)
+  userAgent          String?           @db.VarChar(255)
+  moderatedByStaffId String?
+  moderatedBy        StaffUser?        @relation("BlogCommentModerator", fields: [moderatedByStaffId], references: [id], onDelete: SetNull)
+  moderatedAt        DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([postId, status, createdAt])
+  @@index([status, createdAt])
+  @@index([ipHash, createdAt])
+  @@index([moderatedByStaffId])
 }
 
 model AuditLog {

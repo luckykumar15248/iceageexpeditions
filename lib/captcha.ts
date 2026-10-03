@@ -36,7 +36,7 @@ function fail(reason: CaptchaFailure): CaptchaResult {
 
 let warnedDisabled = false
 
-export async function verifyCaptcha(formData: FormData, form: "enquiry" | "booking"): Promise<CaptchaResult> {
+export async function verifyCaptcha(formData: FormData, form: "enquiry" | "booking" | "comment"): Promise<CaptchaResult> {
   const secret = process.env.RECAPTCHA_SECRET_KEY?.trim()
   if (!secret) {
     if (process.env.NODE_ENV === "production" && !warnedDisabled) {

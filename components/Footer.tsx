@@ -11,6 +11,7 @@ const expeditions = [
 const explore = [
   { href: "/about", label: "About us" },
   { href: "/gallery", label: "Gallery" },
+  { href: "/blog", label: "Blog and field notes" },
   { href: "/safety", label: "Safety and altitude guide" },
   { href: "/gear", label: "Gear and packing checklists" },
   { href: "/faq", label: "FAQ" },

@@ -9,6 +9,8 @@ export const StaffPermission = {
   medicalRead: "medical.read",
   catalogWrite: "catalog.write",
   enquiryUpdate: "enquiry.update",
+  blogWrite: "blog.write",
+  commentModerate: "comment.moderate",
 } as const
 
 export type StaffPermission = (typeof StaffPermission)[keyof typeof StaffPermission]
@@ -21,6 +23,8 @@ const GRANTS: Record<StaffRole, readonly StaffPermission[]> = {
     StaffPermission.medicalRead,
     StaffPermission.catalogWrite,
     StaffPermission.enquiryUpdate,
+    StaffPermission.blogWrite,
+    StaffPermission.commentModerate,
   ],
   EXPEDITION_LEAD: [
     StaffPermission.departureTransition,
@@ -28,6 +32,8 @@ const GRANTS: Record<StaffRole, readonly StaffPermission[]> = {
     StaffPermission.medicalRead,
     StaffPermission.catalogWrite,
     StaffPermission.enquiryUpdate,
+    StaffPermission.blogWrite,
+    StaffPermission.commentModerate,
   ],
   GUIDE: [StaffPermission.manifestRead],
   FINANCE: [StaffPermission.bookingCancel, StaffPermission.manifestRead],

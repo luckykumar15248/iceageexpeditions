@@ -56,6 +56,18 @@ export function formatDepartureDate(value: Date): string {
   }).format(value)
 }
 
+/** Date and time in India Standard Time, for ops audit-style displays. */
+export function formatIstDateTime(value: Date): string {
+  return `${new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Asia/Kolkata",
+  }).format(value)} IST`
+}
+
 export function formatMovingHours(hours: number): string {
   const rounded = Math.round(hours * 10) / 10
   const label = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)

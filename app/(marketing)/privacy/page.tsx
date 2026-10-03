@@ -33,7 +33,12 @@ export default function PrivacyPage() {
           <a href="https://policies.google.com/terms" className="font-semibold text-alpine-deep underline" rel="noopener noreferrer" target="_blank">
             Terms of Service
           </a>
-          .
+          . The blog comment form uses the same check.
+        </p>
+        <p>
+          Blog comments store the name, email address, and comment you submit, plus a one-way hash of your network
+          address used only to slow down spam. Your name and comment appear on the article after the team approves
+          them. Your email is never published; staff may use it to reply privately.
         </p>
         <p>
           To ask what is stored on a request, use the{" "}
