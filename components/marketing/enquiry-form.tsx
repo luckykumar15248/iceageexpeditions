@@ -1,7 +1,9 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useState, type FormEvent } from "react"
 import { submitEnquiry } from "@/app/(marketing)/actions"
+import { Captcha, captchaSatisfied, scrollToCaptcha } from "@/components/ui/captcha"
+import { CAPTCHA_PROMPT } from "@/lib/captcha-config"
 import { initialEnquiryState, type EnquiryFormState } from "@/lib/form-state"
 
 export type EnquiryDepartureOption = {
@@ -29,6 +31,17 @@ export function EnquiryForm({
   defaultEmail?: string
 }) {
   const [state, action, pending] = useActionState(submitEnquiry, initialEnquiryState)
+  const [captchaPrompt, setCaptchaPrompt] = useState(false)
+
+  function guardCaptcha(event: FormEvent<HTMLFormElement>) {
+    if (captchaSatisfied(event.currentTarget)) {
+      setCaptchaPrompt(false)
+      return
+    }
+    event.preventDefault()
+    setCaptchaPrompt(true)
+    scrollToCaptcha(event.currentTarget)
+  }
 
   if (state.status === "success") {
     return (
@@ -40,7 +53,7 @@ export function EnquiryForm({
   }
 
   return (
-    <form action={action} className="grid gap-6 rounded-3xl border border-line bg-paper p-8 shadow-[0_12px_32px_rgba(26,29,27,0.07)]">
+    <form action={action} onSubmit={guardCaptcha} className="grid gap-6 rounded-3xl border border-line bg-paper p-8 shadow-[0_12px_32px_rgba(26,29,27,0.07)]">
       <div>
         <h2 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">{heading}</h2>
         <p className="mt-3 text-base leading-relaxed text-muted">
@@ -193,6 +206,7 @@ export function EnquiryForm({
           </div>
         </>
       ) : null}
+      <Captcha resetSignal={state} error={captchaPrompt ? CAPTCHA_PROMPT : state.fieldErrors.captcha} />
       <button
         type="submit"
         disabled={pending}

@@ -1,4 +1,15 @@
-export type EnquiryField = "name" | "email" | "phone" | "preferredMonth" | "partySize" | "message" | "vehicleClass" | "experience" | "fitnessNote" | "fitnessAck"
+export type EnquiryField =
+  | "name"
+  | "email"
+  | "phone"
+  | "preferredMonth"
+  | "partySize"
+  | "message"
+  | "vehicleClass"
+  | "experience"
+  | "fitnessNote"
+  | "fitnessAck"
+  | "captcha"
 
 export type EnquiryFormState = {
   status: "idle" | "success" | "error"

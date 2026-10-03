@@ -3,6 +3,7 @@
 import { revalidateTag } from "next/cache"
 import { ExperienceLevel } from "@/app/generated/prisma/client"
 import { createBooking } from "@/lib/bookings"
+import { verifyCaptcha } from "@/lib/captcha"
 import { DomainError } from "@/lib/errors"
 import type { BookingFormState } from "@/lib/form-state"
 import type { TravelerDraft } from "@/lib/party"
@@ -36,6 +37,17 @@ export async function submitBooking(
   formData: FormData,
 ): Promise<BookingFormState> {
   const departureId = read(formData, "departureId")
+
+  const captcha = await verifyCaptcha(formData, "booking")
+  if (!captcha.ok) {
+    return {
+      status: "error",
+      message: "Complete the security check below, then send the request again.",
+      reference: "",
+      fieldErrors: { captcha: captcha.message },
+    }
+  }
+
   const lead = travelerFrom(formData, "lead", false)
   const travelers = [lead]
   if (formData.get("includePillion") === "yes") {

@@ -1,6 +1,7 @@
 "use server"
 
 import { EnquiryKind, VehicleClass } from "@/app/generated/prisma/client"
+import { verifyCaptcha } from "@/lib/captcha"
 import { createEnquiry } from "@/lib/enquiries"
 import { DomainError } from "@/lib/errors"
 import type { EnquiryField, EnquiryFormState } from "@/lib/form-state"
@@ -27,6 +28,17 @@ export async function submitEnquiry(
     experience: read(formData, "experience"),
     fitnessNote: read(formData, "fitnessNote"),
   }
+
+  const captcha = await verifyCaptcha(formData, "enquiry")
+  if (!captcha.ok) {
+    return {
+      status: "error",
+      message: "Complete the security check below, then send again.",
+      fieldErrors: { captcha: captcha.message },
+      values,
+    }
+  }
+
   const fieldErrors: Partial<Record<EnquiryField, string>> = {}
   if (read(formData, "requireFitness") === "yes") {
     if (!values.experience) fieldErrors.experience = "Choose an experience level"

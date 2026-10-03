@@ -24,6 +24,18 @@ export default function PrivacyPage() {
           place of the one on your file.
         </p>
         <p>
+          The enquiry and booking forms use Google reCAPTCHA to keep automated spam out. Google receives your
+          browser and device details when you complete that check, under the{" "}
+          <a href="https://policies.google.com/privacy" className="font-semibold text-alpine-deep underline" rel="noopener noreferrer" target="_blank">
+            Google Privacy Policy
+          </a>{" "}
+          and{" "}
+          <a href="https://policies.google.com/terms" className="font-semibold text-alpine-deep underline" rel="noopener noreferrer" target="_blank">
+            Terms of Service
+          </a>
+          .
+        </p>
+        <p>
           To ask what is stored on a request, use the{" "}
           <Link href="/contact" className="font-semibold text-alpine-deep underline">
             contact form

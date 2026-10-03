@@ -1,8 +1,10 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useState, type FormEvent } from "react"
 import type { VehicleClass } from "@/app/generated/prisma/client"
 import { submitBooking } from "@/app/(booking)/actions"
+import { Captcha, captchaSatisfied, scrollToCaptcha } from "@/components/ui/captcha"
+import { CAPTCHA_PROMPT } from "@/lib/captcha-config"
 import { initialBookingState } from "@/lib/form-state"
 
 export function BookingForm({
@@ -16,6 +18,17 @@ export function BookingForm({
 }) {
   const [state, action, pending] = useActionState(submitBooking, initialBookingState)
   const motorbike = vehicleClass === "MOTORBIKE"
+  const [captchaPrompt, setCaptchaPrompt] = useState(false)
+
+  function guardCaptcha(event: FormEvent<HTMLFormElement>) {
+    if (captchaSatisfied(event.currentTarget)) {
+      setCaptchaPrompt(false)
+      return
+    }
+    event.preventDefault()
+    setCaptchaPrompt(true)
+    scrollToCaptcha(event.currentTarget)
+  }
 
   if (state.status === "success") {
     return (
@@ -28,7 +41,7 @@ export function BookingForm({
   }
 
   return (
-    <form action={action} className="grid gap-8">
+    <form action={action} onSubmit={guardCaptcha} className="grid gap-8">
       {state.status === "error" ? (
         <p className="rounded-2xl border border-danger/40 bg-paper px-4 py-3 text-base text-danger" role="alert">
           {state.message}
@@ -56,6 +69,7 @@ export function BookingForm({
         </label>
         {state.fieldErrors.policy ? <p className="text-base text-danger" role="alert">{state.fieldErrors.policy}</p> : null}
       </fieldset>
+      <Captcha resetSignal={state} error={captchaPrompt ? CAPTCHA_PROMPT : state.fieldErrors.captcha} />
       <button type="submit" disabled={pending} className="min-h-11 rounded-md bg-alpine px-6 text-base font-medium text-white hover:bg-alpine-deep disabled:opacity-60">
         {pending ? "Sending request…" : motorbike ? "Request this departure" : "Hold SUV seats"}
       </button>
