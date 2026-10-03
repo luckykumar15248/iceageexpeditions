@@ -1,6 +1,6 @@
 /**
  * Server-only sniff, disk, and duration helpers for the ops media library.
- * Images land in public/uploads/media/; videos in public/uploads/videos/.
+ * Images land in <MEDIA_ROOT>/media/; videos in <MEDIA_ROOT>/videos/ (see mediaRoot()).
  * Client components must import limits and formatters from `@/lib/media-format`.
  */
 import { createWriteStream } from "node:fs"
@@ -50,20 +50,52 @@ export function videoMime(kind: VideoKind): string {
   return kind === "mp4" ? "video/mp4" : "video/webm"
 }
 
-export function uploadDir(kind: "image" | "video"): { abs: string; urlPrefix: string } {
-  const folder = kind === "video" ? "videos" : "media"
+export type UploadFolder = "media" | "videos" | "expeditions"
+
+/**
+ * Directory that backs every `/uploads/*` URL.
+ * Production sets MEDIA_ROOT to a persistent path outside the release folder;
+ * local dev falls back to public/uploads.
+ */
+export function mediaRoot(): string {
+  const configured = process.env.MEDIA_ROOT?.trim()
+  if (configured) return path.resolve(/*turbopackIgnore: true*/ configured)
+  return path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads")
+}
+
+export function uploadDir(folder: UploadFolder): { abs: string; urlPrefix: string } {
   return {
-    abs: path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", folder),
+    abs: path.join(/*turbopackIgnore: true*/ mediaRoot(), folder),
     urlPrefix: `/uploads/${folder}`,
   }
 }
 
-/** Resolve a stored public URL to a path under public/. Rejects traversal. */
+/** Resolve a stored `/uploads/...` URL to a file under mediaRoot(). Rejects traversal. */
 export function publicUploadPath(url: string): string | null {
   if (!url.startsWith("/uploads/")) return null
-  const relative = url.replace(/^\/+/, "")
-  if (relative.includes("..")) return null
-  return path.join(/*turbopackIgnore: true*/ process.cwd(), "public", ...relative.split("/"))
+  const segments = url.slice("/uploads/".length).split("/")
+  if (segments.some((s) => s === "" || s === "." || s === ".." || s.includes("\\") || s.includes("\0"))) return null
+  const root = mediaRoot()
+  const resolved = path.join(/*turbopackIgnore: true*/ root, ...segments)
+  const relative = path.relative(root, resolved)
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) return null
+  return resolved
+}
+
+const SERVABLE_MIME: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  mp4: "video/mp4",
+  m4v: "video/mp4",
+  webm: "video/webm",
+}
+
+/** MIME type for files the uploads route may serve; null for anything else (HTML, SVG, scripts). */
+export function servableMime(filePath: string): string | null {
+  const ext = path.extname(filePath).slice(1).toLowerCase()
+  return SERVABLE_MIME[ext] ?? null
 }
 
 /**

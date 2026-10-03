@@ -284,10 +284,15 @@ export async function uploadOpsImage(formData: FormData): Promise<{ ok: true; ur
   const kind = imageKindFromBytes(bytes)
   if (!kind) return { ok: false, message: "Upload a JPEG, PNG, or WebP image." }
   const filename = `${randomBytes(16).toString("hex")}.${kind}`
-  const directory = path.join(process.cwd(), "public", "uploads", "expeditions")
-  await mkdir(directory, { recursive: true })
-  await writeFile(path.join(directory, filename), bytes)
-  return { ok: true, url: `/uploads/expeditions/${filename}` }
+  const folder = uploadDir("expeditions")
+  try {
+    await mkdir(folder.abs, { recursive: true })
+    await writeFile(path.join(/*turbopackIgnore: true*/ folder.abs, filename), bytes)
+  } catch (error) {
+    console.error("[media] expedition image write failed", error instanceof Error ? error.message : String(error))
+    return { ok: false, message: "The image could not be written to disk." }
+  }
+  return { ok: true, url: `${folder.urlPrefix}/${filename}` }
 }
 
 function toExpeditionInput(draft: ExpeditionDraft, status: "DRAFT" | "PUBLISHED") {
@@ -402,7 +407,7 @@ export async function uploadMediaAction(formData: FormData): Promise<MediaUpload
   const isVideo = Boolean(vidKind)
   const ext = imgKind ? (imgKind === "jpg" ? "jpg" : imgKind) : vidKind!
   const safeName = `${randomBytes(16).toString("hex")}.${ext}`
-  const folder = uploadDir(isVideo ? "video" : "image")
+  const folder = uploadDir(isVideo ? "videos" : "media")
   const destPath = path.join(/*turbopackIgnore: true*/ folder.abs, safeName)
   const url = `${folder.urlPrefix}/${safeName}`
   const mimeType = imgKind ? imageMime(imgKind) : videoMime(vidKind!)

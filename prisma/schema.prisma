@@ -341,7 +341,7 @@ model MediaAsset {
   id                String         @id @default(cuid())
   /// Distinguishes image assets from video assets for filtering and rendering.
   assetType         MediaAssetType @default(IMAGE)
-  /// Safe filename stored on disk under public/uploads/media/ (images) or public/uploads/videos/ (videos).
+  /// Safe filename stored on disk under <MEDIA_ROOT>/media/ (images) or <MEDIA_ROOT>/videos/ (videos). MEDIA_ROOT defaults to public/uploads.
   filename          String         @db.VarChar(255)
   /// Original browser filename for display.
   originalName      String         @db.VarChar(255)
